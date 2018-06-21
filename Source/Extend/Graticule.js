@@ -147,7 +147,7 @@ define([
 
     Graticule.prototype.initialize = function (context) {
         this.createGirdLines();
-        // this.createLabels();
+        this.createLabels();
         return RenderObject.prototype.initialize.call(this, context);
     };
 
@@ -228,14 +228,14 @@ define([
             geoPos.y = dStartLat + iy * dIntervalY;
             for (let ix = 0; ix < iSizeX; ++ix) {
                 geoPos.x = dStartLon + ix * dIntervalX;
-                latMesh.m_vertexs[iVByteIndex++] = geoPos.x;
-                latMesh.m_vertexs[iVByteIndex++] = geoPos.y;
-                latMesh.m_vertexs[iVByteIndex++] = geoPos.y;
+                latMesh._vertexs[iVByteIndex++] = geoPos.x;
+                latMesh._vertexs[iVByteIndex++] = geoPos.y;
+                latMesh._vertexs[iVByteIndex++] = geoPos.y;
                 iCurVCount++;
 
                 if (ix < iSizeX - 1) {
-                    latMesh.m_indices[iIByteIndex++] = iCurVCount - 1;
-                    latMesh.m_indices[iIByteIndex++] = iCurVCount;
+                    latMesh._indices[iIByteIndex++] = iCurVCount - 1;
+                    latMesh._indices[iIByteIndex++] = iCurVCount;
                 }
             }
         }
@@ -254,14 +254,14 @@ define([
             geoPos.x = dStartLon + ix * dIntervalX;
             for (let iy = 0; iy < iSizeY; ++iy) {
                 geoPos.y = dStartLat + iy * dIntervalY;
-                lonMesh.m_vertexs[iVByteIndex++] = geoPos.x;
-                lonMesh.m_vertexs[iVByteIndex++] = geoPos.y;
-                lonMesh.m_vertexs[iVByteIndex++] = geoPos.x;
+                lonMesh._vertexs[iVByteIndex++] = geoPos.x;
+                lonMesh._vertexs[iVByteIndex++] = geoPos.y;
+                lonMesh._vertexs[iVByteIndex++] = geoPos.x;
                 iCurVCount++;
 
                 if (iy < iSizeY - 1) {
-                    lonMesh.m_indices[iIByteIndex++] = iCurVCount - 1;
-                    lonMesh.m_indices[iIByteIndex++] = iCurVCount;
+                    lonMesh._indices[iIByteIndex++] = iCurVCount - 1;
+                    lonMesh._indices[iIByteIndex++] = iCurVCount;
                 }
             }
         }

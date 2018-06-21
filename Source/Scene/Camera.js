@@ -106,6 +106,10 @@ define([
         this._actualInvTransform = Matrix4.clone(Matrix4.IDENTITY);
         this._transformChanged = false;
 
+        this._lookAtPositionWC = new Cartesian3();
+        this._lookAtDistance = 0.0;
+        this._measuringScale = 0.0;
+
         /**
          * The position of the camera.
          *
@@ -717,6 +721,20 @@ define([
             }
         },
 
+        lookAtPositionWC: {
+            get: function () {
+                updateMembers(this);
+                return this._lookAtPositionWC;
+            }
+        },
+
+        lookAtDistance: {
+            get: function () {
+                updateMembers(this);
+                return this._lookAtDistance;
+            }
+        },
+
         /**
          * Gets the {@link Cartographic} position of the camera, with longitude and latitude
          * expressed in radians and height in meters.  In 2D and Columbus View, it is possible
@@ -908,6 +926,7 @@ define([
         }
     });
 
+    var scratchCartesian2 = new Cartesian2();
     /**
      * @private
      */
@@ -924,6 +943,51 @@ define([
             throw new DeveloperError('A PerspectiveFrustum or OrthographicFrustum is required in 3D and Columbus view');
         }
         //>>includeEnd('debug');
+
+        var projection = this._scene.mapProjection;
+        this._projection = projection;
+        if (this.positionCartographic.height > 40000000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 0));
+        } else if (this.positionCartographic.height <= 40000000 && this.positionCartographic.height > 37500000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 0.1));
+        } else if (this.positionCartographic.height <= 37500000 && this.positionCartographic.height > 35000000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 0.2));
+        } else if (this.positionCartographic.height <= 35000000 && this.positionCartographic.height > 32500000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 0.3));
+        } else if (this.positionCartographic.height <= 32500000 && this.positionCartographic.height > 30000000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 0.3));
+        }
+        else if (this.positionCartographic.height <= 30000000 && this.positionCartographic.height > 27500000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 0.4));
+        }
+        else if (this.positionCartographic.height <= 27500000 && this.positionCartographic.height > 25000000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 0.5));
+        }
+        else if (this.positionCartographic.height <= 25000000 && this.positionCartographic.height > 22500000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 0.6));
+        }
+        else if (this.positionCartographic.height <= 22500000 && this.positionCartographic.height > 20000000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 0.7));
+        }
+        else if (this.positionCartographic.height <= 20000000 && this.positionCartographic.height > 17500000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 0.8));
+        }
+        else if (this.positionCartographic.height <= 17500000 && this.positionCartographic.height > 15000000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 0.9));
+        }
+        else if (this.positionCartographic.height <= 15000000 && this.positionCartographic.height > 10000000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 1.0));
+        }
+        else if (this.positionCartographic.height <= 10000000 && this.positionCartographic.height > 5000000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 1.1));
+        }
+        else if (this.positionCartographic.height <= 5000000 && this.positionCartographic.height > 2000000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 1.3));
+        }
+        else if (this.positionCartographic.height <= 2000000) {
+            this._maxCoord = projection.project(new Cartographic(Math.PI, 1.4));
+        }
+
 
         var updateFrustum = false;
         if (mode !== this._mode) {
@@ -959,6 +1023,23 @@ define([
             this._suspendTerrainAdjustment = !globeFinishedUpdating;
         }
         this._adjustHeightForTerrain();
+
+        // 用来计算_measuringScale。取中心点区域两点像素所对应的笛卡尔坐标，计算两点的距离即为_measuringScale
+        var canvas = this._scene.canvas;
+        if (defined(canvas)) {
+            scratchCartesian2.x = canvas.clientWidth * 0.5;
+            scratchCartesian2.y = canvas.clientHeight * 0.5;
+            var centerCartesian = this.pickEllipsoid(scratchCartesian2);
+            scratchCartesian2.y += 1;
+            var centerCartesian2 = this.pickEllipsoid(scratchCartesian2);
+            if (centerCartesian !== undefined && centerCartesian2 !== undefined) {
+                this._measuringScale = Cartesian3.distance(centerCartesian, centerCartesian2);
+            }
+            if (defined(centerCartesian)) {
+                this._lookAtPositionWC = centerCartesian;
+                this._lookAtDistance = Cartesian3.distance(this._lookAtPositionWC, this._positionWC);
+            }
+        }
     };
 
     var setTransformPosition = new Cartesian3();

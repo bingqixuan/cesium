@@ -62,26 +62,26 @@ var provider = new Cesium.WebMapTileServiceImageryProvider({
     tileMatrixSetID : '2km',
     maximumLevel : 5,
     format : 'image/png',
-    clock: viewer.clock,
-    times: times,
+//    clock: viewer.clock,
+//    times: times,
     credit : 'NASA Global Imagery Browse Services for EOSDIS'
 });
 var imageryLayers = viewer.imageryLayers;
 imageryLayers.addImageryProvider(provider);
-provider.readyPromise
-    .then(function() {
-        var start = Cesium.JulianDate.fromIso8601('2015-07-30');
-        var end = Cesium.JulianDate.fromIso8601('2017-06-17');
-
-        viewer.timeline.zoomTo(start, end);
-
-        var clock = viewer.clock;
-        clock.startTime = start;
-        clock.endTime = end;
-        clock.currentTime = start;
-        clock.clockRange = Cesium.ClockRange.LOOP_STOP;
-        clock.multiplier = 86400;
-    });
+//provider.readyPromise
+//    .then(function() {
+//        var start = Cesium.JulianDate.fromIso8601('2015-07-30');
+//        var end = Cesium.JulianDate.fromIso8601('2017-06-17');
+//
+//        viewer.timeline.zoomTo(start, end);
+//
+//        var clock = viewer.clock;
+//        clock.startTime = start;
+//        clock.endTime = end;
+//        clock.currentTime = start;
+//        clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+//        clock.multiplier = 86400;
+//    });
 //Sandcastle_End
     Sandcastle.finishedLoading();
 }

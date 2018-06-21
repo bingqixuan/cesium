@@ -279,7 +279,8 @@ define([
                 var colorCommand = new DrawCommand({
                     primitiveType: this._primitiveType,
                     boundingVolume: new BoundingSphere(),
-                    owner: this
+                    owner: this,
+                    pass: Pass.GLOBE
                 });
                 colorCommand.vertexArray = this._va[i];
                 colorCommand.renderState = this._rs;
