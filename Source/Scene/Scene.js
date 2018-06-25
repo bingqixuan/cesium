@@ -479,7 +479,7 @@ define([
         this.farToNearRatio = 1000.0;
 
         /**
-         * The far-to-near ratio of the multi-frustum when using a logarithmic depth buffer.
+         * The far-to-near ratio of the multi-frustum when using a logarithmic depth buffer.  可以设置是否用多视锥
          * <p>
          * This value is used to create the near and far values for each frustum of the multi-frustum. It is only used
          * when {@link Scene#logarithmicDepthBuffer} is <code>true</code>. When <code>logarithmicDepthBuffer</code> is
@@ -490,6 +490,7 @@ define([
          * @default 1e9
          */
         this.logarithmicDepthFarToNearRatio = 1e9;
+        // this.logarithmicDepthFarToNearRatio = 1e3;
 
         /**
          * Determines the uniform depth size in meters of each frustum of the multifrustum in 2D. If a primitive or model close
