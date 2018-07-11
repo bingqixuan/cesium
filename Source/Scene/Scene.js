@@ -1412,6 +1412,7 @@ define([
         },
 
         /**
+         * 是否启用logarithmic深度缓冲。若启用，则在多视锥模式下允许用更少的视锥来增加效率。
          * Whether or not to use a logarithmic depth buffer. Enabling this option will allow for less frustums in the multi-frustum,
          * increasing performance. This property relies on {@link Context#fragmentDepth} being supported.
          * @memberof Scene.prototype

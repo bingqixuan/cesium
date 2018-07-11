@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<div id="toolbar">
+    <table>
+        <tbody><tr>
+            <td>Alpha</td>
+            <td>
+                <input type="range" min="0.0" max="1.0" step="0.02" data-bind="value: alpha, valueUpdate: 'input'">
+                <input type="text" size="5" data-bind="value: alpha">
+            </td>
+        </tr>
+        <tr>
+            <td>Height</td>
+            <td>
+                <input type="range" min="500" max="5000" step="1" data-bind="value: height, valueUpdate: 'input'">
+                <input type="text" size="5" data-bind="value: height">
+            </td>
+        </tr>
+        </tbody></table>
+</div>
+<script id="cesium_sandcastle_script">
+    function startup(Cesium) {
+        'use strict';
+//Sandcastle_Begin
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            // Use Cesium World Terrain
+            terrainProvider : Cesium.createWorldTerrain()
+        });
+
+// Closeby details are clipped too soon when this is enabled
+        viewer.scene.logarithmicDepthBuffer = false;
+
+// The corners of Colorado
+        var co = [-109.0, 37.0, 0,
+            -102.0, 37.0, 0,
+            -102.0, 41.0, 0,
+            -109.0, 41.0, 0];
+
+// The "water" is just a blue rectangular extruded polygon!
+        var water = viewer.entities.add({
+            name : 'Blue extruded polygon over Colorado',
+            polygon : {
+                hierarchy : Cesium.Cartesian3.fromDegreesArrayHeights(co),
+                extrudedHeight: 3000,
+                // vertexFormat allows it to warp around the globe 该属性可以使其贴在球上
+                vertexFormat : Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT,
+                material : Cesium.Color.BLUE.withAlpha(0.3)
+            }
+        });
+
+// The viewModel tracks the state of our mini application.
+        var viewModel = {
+            alpha: 0.3,
+            height: 3000
+        };
+        Cesium.knockout.track(viewModel);
+
+        var toolbar = document.getElementById('toolbar');
+        Cesium.knockout.applyBindings(viewModel, toolbar);
+
+        Cesium.knockout.getObservable(viewModel, 'alpha').subscribe(
+            function(newValue) {
+                var alpha = parseFloat(newValue);
+                water.polygon.material = Cesium.Color.BLUE.withAlpha(alpha);
+            }
+        );
+
+        Cesium.knockout.getObservable(viewModel, 'height').subscribe(
+            function(newValue) {
+                water.polygon.extrudedHeight = newValue;
+            }
+        );
+
+// Fly to a position with a top-down view
+        viewer.camera.flyTo({
+            destination : Cesium.Cartesian3.fromDegrees(-107.0, 39.0, 100000.0)
+        });
+
+
+
+//Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</body>
+</html>
