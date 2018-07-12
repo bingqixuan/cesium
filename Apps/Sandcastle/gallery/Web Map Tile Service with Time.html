@@ -68,20 +68,20 @@ var provider = new Cesium.WebMapTileServiceImageryProvider({
 });
 var imageryLayers = viewer.imageryLayers;
 imageryLayers.addImageryProvider(provider);
-//provider.readyPromise
-//    .then(function() {
-//        var start = Cesium.JulianDate.fromIso8601('2015-07-30');
-//        var end = Cesium.JulianDate.fromIso8601('2017-06-17');
-//
-//        viewer.timeline.zoomTo(start, end);
-//
-//        var clock = viewer.clock;
-//        clock.startTime = start;
-//        clock.endTime = end;
-//        clock.currentTime = start;
-//        clock.clockRange = Cesium.ClockRange.LOOP_STOP;
-//        clock.multiplier = 86400;
-//    });
+provider.readyPromise
+    .then(function() {
+        var start = Cesium.JulianDate.fromIso8601('2015-07-30');
+        var stop = Cesium.JulianDate.fromIso8601('2017-06-17');
+
+        viewer.timeline.zoomTo(start, stop);
+
+        var clock = viewer.clock;
+        clock.startTime = start;
+        clock.stopTime = stop;
+        clock.currentTime = start;
+        clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+        clock.multiplier = 86400;
+    });
 //Sandcastle_End
     Sandcastle.finishedLoading();
 }
