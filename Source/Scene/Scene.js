@@ -1490,7 +1490,8 @@ define([
                Cartesian3.equalsEpsilon(camera0.direction, camera1.direction, epsilon) &&
                Cartesian3.equalsEpsilon(camera0.up, camera1.up, epsilon) &&
                Cartesian3.equalsEpsilon(camera0.right, camera1.right, epsilon) &&
-               Matrix4.equalsEpsilon(camera0.transform, camera1.transform, epsilon);
+               Matrix4.equalsEpsilon(camera0.transform, camera1.transform, epsilon) &&
+               camera0.frustum.equalsEpsilon(camera1.frustum, epsilon);
     }
 
     function updateDerivedCommands(scene, command) {
@@ -1526,10 +1527,6 @@ define([
                 derivedCommands.logDepth = undefined;
             }
 
-            if (scene.frameState.passes.pick && !defined(command.pickId)) {
-                return;
-            }
-
             if (shadowsEnabled && (command.receiveShadows || command.castShadows)) {
                 derivedCommands.shadows = ShadowMap.createDerivedCommands(shadowMaps, lightShadowMaps, command, shadowsDirty, context, derivedCommands.shadows);
                 if (useLogDepth) {
@@ -1554,6 +1551,10 @@ define([
                 } else {
                     derivedCommands.oit = oit.createDerivedCommands(command, context, derivedCommands.oit);
                 }
+            }
+
+            if (scene.frameState.passes.pick && !defined(command.pickId)) {
+                return;
             }
 
             derivedCommands.depth = DerivedCommand.createDepthOnlyDerivedCommand(scene, command, context, derivedCommands.depth);
@@ -3174,13 +3175,17 @@ define([
 
     function checkForCameraUpdates(scene) {
         var camera = scene._camera;
-        if (!cameraEqual(camera, scene._cameraClone, CesiumMath.EPSILON15)) {
+        var cameraClone = scene._cameraClone;
+
+        scene._frustumChanged = !camera.frustum.equals(cameraClone.frustum);
+
+        if (!cameraEqual(camera, cameraClone, CesiumMath.EPSILON15)) {
             if (!scene._cameraStartFired) {
                 camera.moveStart.raiseEvent();
                 scene._cameraStartFired = true;
             }
             scene._cameraMovedTime = getTimestamp();
-            Camera.clone(camera, scene._cameraClone);
+            Camera.clone(camera, cameraClone);
 
             return true;
         }
@@ -3312,10 +3317,8 @@ define([
         tryAndCatchError(this, time, update);
         this._postUpdate.raiseEvent(this, time);
 
-        this._frustumChanged = !this._camera.frustum.equals(this._cameraClone.frustum);
-
         var cameraChanged = checkForCameraUpdates(this);
-        var shouldRender = !this.requestRenderMode || this._renderRequested || cameraChanged || this._frustumChanged || this._logDepthBufferDirty || (this.mode === SceneMode.MORPHING);
+        var shouldRender = !this.requestRenderMode || this._renderRequested || cameraChanged || this._logDepthBufferDirty || (this.mode === SceneMode.MORPHING);
         if (!shouldRender && defined(this.maximumRenderTimeChange) && defined(this._lastRenderTime)) {
             var difference = Math.abs(JulianDate.secondsDifference(this._lastRenderTime, time));
             shouldRender = shouldRender || difference > this.maximumRenderTimeChange;

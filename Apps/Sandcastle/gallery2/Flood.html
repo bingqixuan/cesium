@@ -47,6 +47,10 @@
 //Sandcastle_Begin
         var viewer = new Cesium.Viewer('cesiumContainer', {
             // Use Cesium World Terrain
+            imageryProvider : Cesium.createTileMapServiceImageryProvider({
+                url : Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+            }),
+            baseLayerPicker : false,
             terrainProvider : Cesium.createWorldTerrain()
         });
 
