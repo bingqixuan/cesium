@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<script id="cesium_sandcastle_script">
+    var viewer;
+    function startup(Cesium) {
+        'use strict';
+//Sandcastle_Begin
+        viewer = new Cesium.Viewer('cesiumContainer', {
+            infoBox: false,
+            selectionIndicator: false,
+            timeline: false,
+            animation: false,
+            scene3DOnly: true,
+            geocoder: false,
+            homeButton: false,
+            sceneModePicker: false,
+            navigationHelpButton: false,
+            imageryProvider : Cesium.createTileMapServiceImageryProvider({
+                url : Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+            }),
+            baseLayerPicker : false,
+        });
+        var position = Cesium.Cartesian3.fromDegrees(-75, 40);
+
+// Original, non-rotated cone for comparison.
+        viewer.entities.add(new Cesium.Entity({
+            position: position,
+            cylinder: {
+                topRadius: 0,
+                bottomRadius: 5,
+                length: 20,
+                material: Cesium.Color.YELLOW.withAlpha(0.5)
+            }
+        }));
+
+// Create a rotation
+        var orientation = Cesium.Transforms.headingPitchRollQuaternion(
+            position,
+            new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(0.0),
+                Cesium.Math.toRadians(30.0),
+                Cesium.Math.toRadians(45.0)));
+
+// Rotated cone
+        var rotatedCone = viewer.entities.add(new Cesium.Entity({
+            position: position,
+            orientation: orientation,
+            cylinder: {
+                topRadius: 0,
+                bottomRadius: 5,
+                length: 20,
+                material: Cesium.Color.RED.withAlpha(0.5)
+            }
+        }));
+
+        var originalApexPos = Cesium.Cartesian3.fromDegrees(-75, 40, 10);
+
+// Original apex
+        viewer.entities.add(new Cesium.Entity({
+            position: originalApexPos,
+            point: {
+                color: Cesium.Color.YELLOW,
+                pixelSize: 10
+            }
+        }));
+
+// Apex position relative to the center of the cone
+        var localApexPos = new Cesium.Cartesian3(0, 0, 10);
+
+        var modelMatrix = rotatedCone.computeModelMatrix(new Cesium.JulianDate());
+
+        var newApexPos = Cesium.Matrix4.multiplyByPoint(modelMatrix, localApexPos, new Cesium.Cartesian3());
+
+// New apex
+        viewer.entities.add(new Cesium.Entity({
+            position: newApexPos,
+            point: {
+                color: Cesium.Color.RED,
+                pixelSize: 10
+            }
+        }));
+
+        viewer.zoomTo(viewer.entities);
+//Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</body>
+</html>
