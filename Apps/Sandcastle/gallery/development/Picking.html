@@ -7,18 +7,18 @@
     <meta name="description" content="Picking.">
     <meta name="cesium-sandcastle-labels" content="Development">
     <title>Cesium Demo</title>
-    <script type="text/javascript" src="../Sandcastle-header.js"></script>
-    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript" src="../../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../../ThirdParty/requirejs-2.1.20/require.js"></script>
     <script type="text/javascript">
         require.config({
-            baseUrl : '../../../Source',
+            baseUrl : '../../../../Source',
             waitSeconds : 60
         });
     </script>
 </head>
 <body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
 <style>
-    @import url(../templates/bucket.css);
+    @import url(../../templates/bucket.css);
 </style>
 <div id="cesiumContainer" class="fullSize"></div>
 <div id="loadingOverlay"><h1>Loading...</h1></div>
@@ -51,7 +51,7 @@ Sandcastle.addToolbarMenu([{
         var entity = viewer.entities.add({
             position : Cesium.Cartesian3.fromDegrees(-75.59777, 40.03883),
             billboard : {
-                image : '../images/Cesium_Logo_overlay.png'
+                image : '../../images/Cesium_Logo_overlay.png'
             }
         });
 
@@ -229,7 +229,7 @@ Sandcastle.addToolbarMenu([{
             position : position,
             orientation : orientation,
             model : {
-                uri : '../../SampleData/models/CesiumAir/Cesium_Air.glb',
+                uri : '../../../SampleData/models/CesiumAir/Cesium_Air.glb',
                 minimumPixelSize : 256
             }
         });
@@ -275,7 +275,7 @@ Sandcastle.addToolbarMenu([{
         }
 
         primitive = scene.primitives.add(new Cesium.ModelInstanceCollection({
-            url : '../../SampleData/models/CesiumAir/Cesium_Air.gltf',
+            url : '../../../SampleData/models/CesiumAir/Cesium_Air.gltf',
             instances : instances
         }));
 
@@ -308,7 +308,7 @@ Sandcastle.addToolbarMenu([{
     text : 'Batched 3D Model',
     onselect : function() {
         tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-            url: '../../SampleData/Cesium3DTiles/Tilesets/Tileset/tileset.json'
+            url: '../../../SampleData/Cesium3DTiles/Tilesets/Tileset/tileset.json'
         }));
 
         tileset.readyPromise.then(function() {
@@ -336,7 +336,7 @@ Sandcastle.addToolbarMenu([{
     text : 'Instanced 3D Model',
     onselect : function() {
         tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-            url : '../../SampleData/Cesium3DTiles/Instanced/InstancedWithBatchTable/tileset.json'
+            url : '../../../SampleData/Cesium3DTiles/Instanced/InstancedWithBatchTable/tileset.json'
         }));
 
         tileset.readyPromise.then(function() {
@@ -364,7 +364,7 @@ Sandcastle.addToolbarMenu([{
     text : 'Point cloud',
     onselect : function() {
         tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-            url : '../../SampleData/Cesium3DTiles/PointCloud/PointCloudRGB/tileset.json'
+            url : '../../../SampleData/Cesium3DTiles/PointCloud/PointCloudRGB/tileset.json'
         }));
 
         tileset.readyPromise.then(function() {
@@ -402,7 +402,7 @@ Sandcastle.addToolbarMenu([{
         viewer.terrainProvider = Cesium.createWorldTerrain();
 
         tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-            url : '../../../Specs/Data/Cesium3DTiles/Vector/VectorTilePolygons/tileset.json'
+            url : '../../../../Specs/Data/Cesium3DTiles/Vector/VectorTilePolygons/tileset.json'
         }));
 
         tileset.readyPromise.then(function() {
@@ -435,7 +435,7 @@ Sandcastle.addToolbarMenu([{
         viewer.terrainProvider = Cesium.createWorldTerrain();
 
         tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-            url : '../../../Specs/Data/Cesium3DTiles/Vector/VectorTilePolylines/tileset.json'
+            url : '../../../../Specs/Data/Cesium3DTiles/Vector/VectorTilePolylines/tileset.json'
         }));
 
         tileset.readyPromise.then(function() {

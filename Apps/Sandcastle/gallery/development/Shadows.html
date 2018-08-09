@@ -7,18 +7,18 @@
     <meta name="description" content="Shadow maps.">
     <meta name="cesium-sandcastle-labels" content="Development">
     <title>Cesium Demo</title>
-    <script type="text/javascript" src="../Sandcastle-header.js"></script>
-    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript" src="../../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../../ThirdParty/requirejs-2.1.20/require.js"></script>
     <script type="text/javascript">
     require.config({
-        baseUrl : '../../../Source',
+        baseUrl : '../../../../Source',
         waitSeconds : 60
     });
     </script>
 </head>
 <body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
 <style>
-    @import url(../templates/bucket.css);
+    @import url(../../templates/bucket.css);
     #toolbar input[type=range] {
         width : 70px;
     }
@@ -272,15 +272,15 @@ var uiOptions = {
         'Spot' : ['lightHorizon', 'lightAngle', 'distance', 'radius', 'cascades', 'cascadeColors', 'fitNearFar']
     },
     modelUrls : {
-        'Wood Tower' : '../../SampleData/models/WoodTower/Wood_Tower.gltf',
-        'Cesium Air' : '../../SampleData/models/CesiumAir/Cesium_Air.glb',
-        'Cesium Man' : '../../SampleData/models/CesiumMan/Cesium_Man.glb',
-        'Transparent Box' : '../../SampleData/models/ShadowTester/Shadow_Transparent.gltf',
-        'Shadow Tester' : '../../SampleData/models/ShadowTester/Shadow_Tester.gltf',
-        'Shadow Tester 2' : '../../SampleData/models/ShadowTester/Shadow_Tester_2.gltf',
-        'Shadow Tester 3' : '../../SampleData/models/ShadowTester/Shadow_Tester_3.gltf',
-        'Shadow Tester 4' : '../../SampleData/models/ShadowTester/Shadow_Tester_4.gltf',
-        'Shadow Tester Point' : '../../SampleData/models/ShadowTester/Shadow_Tester_Point.gltf'
+        'Wood Tower' : '../../../SampleData/models/WoodTower/Wood_Tower.gltf',
+        'Cesium Air' : '../../../SampleData/models/CesiumAir/Cesium_Air.glb',
+        'Cesium Man' : '../../../SampleData/models/CesiumMan/Cesium_Man.glb',
+        'Transparent Box' : '../../../SampleData/models/ShadowTester/Shadow_Transparent.gltf',
+        'Shadow Tester' : '../../../SampleData/models/ShadowTester/Shadow_Tester.gltf',
+        'Shadow Tester 2' : '../../../SampleData/models/ShadowTester/Shadow_Tester_2.gltf',
+        'Shadow Tester 3' : '../../../SampleData/models/ShadowTester/Shadow_Tester_3.gltf',
+        'Shadow Tester 4' : '../../../SampleData/models/ShadowTester/Shadow_Tester_4.gltf',
+        'Shadow Tester Point' : '../../../SampleData/models/ShadowTester/Shadow_Tester_Point.gltf'
     },
     locations : {
         'Exton' : {
@@ -306,7 +306,7 @@ var uiOptions = {
         '3D Tiles' : {
             'centerLongitude' : -1.31968,
             'centerLatitude' : 0.698874,
-            'tileset' : '../../SampleData/Cesium3DTiles/Tilesets/Tileset/tileset.json'
+            'tileset' : '../../../SampleData/Cesium3DTiles/Tilesets/Tileset/tileset.json'
         }
     }
 };

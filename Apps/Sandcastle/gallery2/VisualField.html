@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<script id="cesium_sandcastle_script">
+    function startup(Cesium) {
+        'use strict';
+//Sandcastle_Begin
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            infoBox : false,
+            selectionIndicator : false,
+            imageryProvider : Cesium.createTileMapServiceImageryProvider({
+                url : Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+            }),
+            baseLayerPicker : false,
+        });
+        var scene = viewer.scene;
+        var camera1 = new Cesium.Camera(scene);
+        camera1.position = Cesium.Cartesian3.fromDegrees(-74.01076015,40.7038482,400);
+        var p1 = Cesium.Cartesian3.fromDegrees(-74.01076015,40.7038482,0);
+        var dir = new Cesium.Cartesian3();
+        Cesium.Cartesian3.add(p1,Cesium.Cartesian3.multiplyByScalar(camera1.position,-1,new Cesium.Cartesian3()),dir);
+        camera1.direction = dir;
+// camera1.up = Cesium.Cartesian3.clone(Cesium.Cartesian3.UNIT_Y);
+        camera1.frustum.fov = Cesium.Math.PI_OVER_THREE;
+        camera1.frustum.near = 1.0;
+        camera1.frustum.far = 20000.0;
+        var shadow_stc = new Cesium.ShadowMap({
+            lightCamera:camera1,
+            enable:true,
+            isPointLight:true,
+            context:scene.context,
+            // fromLightSource:false
+        });
+        var CustomPrimotive = function(shadowMap){
+            this.shadowMap = shadowMap;
+        };
+        CustomPrimotive.prototype.update = function(frameState){
+            frameState.shadowMaps.push(this.shadowMap);
+        }
+        scene.primitives.add(new CustomPrimotive(shadow_stc));
+//Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</body>
+</html>
