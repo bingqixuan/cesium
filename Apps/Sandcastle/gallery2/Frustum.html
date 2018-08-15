@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Use correct character set. -->
+    <meta charset="utf-8">
+    <!-- Tell IE to use the latest, best version. -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <title>3dtiles</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+    <style>
+        @import url(../templates/bucket.css);
+
+        html, body, #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #toolbar {
+            background: rgba(42, 42, 42, 0.8);
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        #toolbar input {
+            vertical-align: middle;
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+    </style>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<div id="cesiumContainer" class="fullSize"></div>
+
+<div id="toolbar">
+    <table>
+        <tbody>
+        <tr>
+            <td>Distance</td>
+            <td>
+                <input id="dist" type="range" min="0" max="1000" step="100"
+                       data-bind="value: distance, valueUpdate: 'input'">
+                <!<input type="text" size="5" data-bind="value: distance">
+            </td>
+        </tr>
+        <tr>
+            <td>Roll Value</td>
+            <td>
+                <input id="roll" type="range" min="0" max="360" step="0.1"
+                       data-bind="value: rollvalue, valueUpdate: 'input'">
+                <! <input type="text" size="5" data-bind="value: rollvalue">
+            </td>
+        </tr>
+        <tr>
+
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+<script>
+    function startup(Cesium) {
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            shadow: false,
+            terrainProvider: Cesium.createWorldTerrain()
+        });
+
+        var initialPosition = Cesium.Cartesian3.fromDegrees(-74.01881302800248, 40.69114333714821, 753);
+        var initialOrientation = new Cesium.HeadingPitchRoll.fromDegrees(21.27879878293835, -21.34390550872461, 0.0716951918898415);
+        viewer.scene.camera.setView({
+            destination: initialPosition,
+            orientation: initialOrientation,
+
+            endTransform: Cesium.Matrix4.IDENTITY
+        });
+        var longitudeString;
+        var latitudeString;
+        var height;
+        var distance;
+        var rolling_value;
+        var frustum;
+        var scene = viewer.scene;
+
+        var input_dist = document.getElementById('dist');
+        var input_roll_value = document.getElementById('roll');
+        console.info(input_dist.defaultValue); // value default (15)
+
+        input_dist.onchange = function () {
+
+//viewer.entities.removeAll();
+            //console.info(input.value); // value change
+            distance = input_dist.value;
+            range(distance, rolling_value);
+
+            //alert(longitudeString+"---"+latitudeString+"---"+height+"---"+distance+"---"+rolling_value);
+        };
+
+        input_roll_value.onchange = function () {
+
+            rolling_value = input_roll_value.value;
+
+            alert(longitudeString + "---" + latitudeString + "---" + height + "---" + distance + "---" + rolling_value);
+            range(distance, rolling_value);
+
+        };
+
+        // A simple demo of 3D Tiles feature picking with hover and select behavior
+        // Building data courtesy of NYC OpenData portal: http://www1.nyc.gov/site/doitt/initiatives/3d-building.page
+
+        var tileset = new Cesium.Cesium3DTileset({url: "https://assets.cesium.com/1461/tileset.json"});
+        viewer.scene.primitives.add(tileset);
+        /*var tileset = new Cesium.Cesium3DTileset({ url: Cesium.IonResource.fromAssetId(4693) });
+         viewer.scene.primitives.add(tileset);*/
+        tileset.style = new Cesium.Cesium3DTileStyle({
+            color: {
+                conditions: [
+
+                    [
+
+                        "true", "color('green')"
+                    ]
+                ]
+            }
+        });
+
+        // Set the initial camera view to look at Manhattan
+
+        // Load the NYC buildings tileset
+
+        var clickHandler = viewer.screenSpaceEventHandler.getInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+        viewer.screenSpaceEventHandler.setInputAction(function
+
+            onLeftClick(movement) {
+
+            var pickedFeature = viewer.scene.pickPosition(movement.position);
+            var
+                ellipsoid = viewer.scene.globe.ellipsoid;
+            var cartesian = viewer
+
+                .camera.pickEllipsoid(pickedFeature, ellipsoid);
+            //var cartographic = ellipsoid.cartesianToCartographic(cartesian);
+            var
+                cartographic = Cesium.Cartographic.fromCartesian
+
+                (pickedFeature);
+            height = cartographic.height.toFixed(2)
+
+            ;
+
+            longitudeString = Cesium.Math.toDegrees(
+                cartographic.longitude);
+
+            latitudeString = Cesium.Math.toDegrees(
+                cartographic.latitude);
+
+            //alert(longitudeString); //Cesium.Math.toDegrees(cartographic.height); //viewer.scene.globe.enableLighting = true;
+
+            distance =
+
+                500.0;
+            rolling_value = 80.0;// radians
+            range(distance, rolling_value);
+
+            console.log("Latitude: "
+
+                + longitudeString + ' , ' + "Longitude: " +
+
+                latitudeString + ' , ' + "Height: " + height);
+
+        }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+
+        function range(distance, rolling_value) {
+
+            //var scene = viewer.scene;
+            viewer.scene.primitives.remove(frustum);
+            alert(distance + "===" + rolling_value);
+
+            var positionOnEllipsoid = Cesium.Cartesian3.fromDegrees(longitudeString, latitudeString, height);
+//var enu = Cesium.Transforms.northEastDownToFixedFrame(positionOnEllipsoid);
+//var rotation = Cesium.Matrix4.getRotation(enu, new Cesium.Matrix3());
+            //Cesium.Matrix3.multiply(rotation, Cesium.Matrix3.fromRotationX(-Cesium.Math.PI_OVER_TWO), rotation);
+            //var orientation = Cesium.Quaternion.fromRotationMatrix(rotation);
+            var redSphere = viewer.entities.add({
+                name: 'Red sphere with black outline', position: Cesium.Cartesian3.fromDegrees(
+                    longitudeString, latitudeString, height),
+                ellipsoid: {
+                    radii: new Cesium.Cartesian3(3, 3, 3),
+                    material: Cesium.Color.RED.withAlpha(0.5), outline: false,
+                    outlineColor: Cesium.Color.BLACK
+                }
+            });
+            var redSphere = viewer.entities.add({
+                name: 'Red sphere with black outline',
+                position: Cesium.Cartesian3.fromDegrees(longitudeString, latitudeString, height),
+                ellipsoid: {
+                    radii: new Cesium.Cartesian3(1.5, 1.5, 1.5)
+                    ,
+                    material: Cesium.Color.YELLOW.withAlpha(0.5),
+                    outline: false,
+                    outlineColor: Cesium.Color.BLACK
+                }
+            });
+
+            var
+                heading = Cesium.Math.toRadians(90);
+            var pitch = 0;
+            var roll = 10.8;
+            var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll
+            );
+            var orientation = Cesium.Transforms.headingPitchRollQuaternion(positionOnEllipsoid, hpr);
+
+            frustum = new
+            Cesium.PerspectiveFrustum({
+
+                    fov: Cesium.Math.toRadians(
+                        rolling_value),
+                    aspectRatio: scene.canvas.clientWidth / scene.canvas.clientHeight,//twist:15,
+                    near: 0.009,
+                    far: distance
+                }
+            );
+            var
+                frustumGeometry = new Cesium.FrustumGeometry({
+                    frustum: frustum,
+                    origin: positionOnEllipsoid,
+                    orientation: orientation,
+                    vertexFormat: Cesium.VertexFormat.POSITION_ONLY
+                });
+            var frustumGeometryInstance = new Cesium.GeometryInstance({
+                geometry: frustumGeometry,
+                attributes: {
+                    color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+                        new Cesium.Color(1, 1, 1, 0.3))
+                    //outline : true,
+                },
+                id: 'frustum'
+            });
+            var
+                frustumPrimitive = scene
+                    .primitives.add(new Cesium.Primitive({
+                        geometryInstances: frustumGeometryInstance,
+                        appearance: new
+                        Cesium.PerInstanceColorAppearance({
+                            closed: true,
+                            grid: true,
+                            flat: true
+                        })
+                    }));
+            scene.primitives.add(new Cesium.Primitive({
+                geometryInstances: new Cesium.GeometryInstance({
+                        geometry: new Cesium.FrustumOutlineGeometry({
+                            //frustum : frustum,
+                            origin: positionOnEllipsoid,
+                            orientation: orientation,
+                            outline: true,
+                        }),
+                        attributes: {
+                            color: Cesium.ColorGeometryInstanceAttribute.fromColor(new Cesium.Color(0.0, 0.0,
+                                0.0, 1))
+                            //outline : true,
+                        }
+                    }
+                ),
+                appearance: new
+                Cesium.PerInstanceColorAppearance({
+                    // flat : true
+                })
+            }));
+            frustumPrimitive.readyPromise.then(function (primitive) {
+                var bs = primitive.getGeometryInstanceAttributes('frustum').boundingSphere;
+                scene.camera.viewBoundingSphere(bs);
+                scene.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+            });
+
+        }
+
+        //Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</html>

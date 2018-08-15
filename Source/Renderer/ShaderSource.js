@@ -222,15 +222,6 @@ define([
             result += extensions[i];
         }
 
-        if (isFragmentShader) {
-            result += '\
-#ifdef GL_FRAGMENT_PRECISION_HIGH\n\
-    precision highp float;\n\
-#else\n\
-    precision mediump float;\n\
-#endif\n\n';
-        }
-
         // Prepend #defines for uber-shaders
         var defines = shaderSource.defines;
         if (defined(defines)) {
@@ -240,6 +231,15 @@ define([
                     result += '#define ' + define + '\n';
                 }
             }
+        }
+
+        if (isFragmentShader) {
+            result += '\
+#ifdef GL_FRAGMENT_PRECISION_HIGH\n\
+    precision highp float;\n\
+#else\n\
+    precision mediump float;\n\
+#endif\n\n';
         }
 
         // GLSLModernizer inserts its own layout qualifiers

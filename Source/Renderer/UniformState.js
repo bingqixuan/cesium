@@ -993,6 +993,7 @@ define([
      * Synchronizes the frustum's state with the camera state.  This is called
      * by the {@link Scene} when rendering to ensure that automatic GLSL uniforms
      * are set to the right value.
+     * 使视锥体状态和相机状态同步。 确保automatic GLSL的uniform变量正确赋值。
      *
      * @param {Object} camera The camera to synchronize with.
      */

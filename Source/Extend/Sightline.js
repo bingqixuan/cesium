@@ -21,6 +21,7 @@ define([
     '../Core/PolylineGeometry',
     '../Core/WebGLConstants',
     '../DataSources/CallbackProperty',
+    '../Renderer/ClearCommand',
     '../Renderer/ContextLimits',
     '../Renderer/Framebuffer',
     '../Renderer/PassState',
@@ -57,6 +58,7 @@ define([
     PolylineGeometry,
     WebGLConstants,
     CallbackProperty,
+    ClearCommand,
     ContextLimits,
     Framebuffer,
     PassState,
@@ -113,6 +115,11 @@ define([
         resize(this, 2048);
 
         this._polylines = this._scene.primitives.add(new PrimitiveCollection());
+
+        this._clearCommand = new ClearCommand({
+            depth: 1.0,
+            color: new Color()
+        });
 
         // this._scene.globe.depthTestAgainstTerrain = true;
     }
@@ -186,13 +193,11 @@ define([
         }
 
         updateCameras(this, frameState);
-        updateFramebuffer(this, frameState.context);
+        updateFramebuffer(this, frameState.context);  // 若纹理大小不变则无需更新帧缓存
 
-        var sightlineCamera = this._sightlineCamera;
-
-        this._pass.camera.clone(sightlineCamera);
-        var inverseView = this._sceneCamera.inverseViewMatrix;
-        Matrix4.multiply(this._sightlineCamera.getViewProjection(), inverseView, this._sightlineMatrix);
+        this._pass.camera.clone(this._sightlineCamera); // 将视点相机更新到Sight Pass下的camera
+        var inverseView = this._sceneCamera.inverseViewMatrix;  // 实际场景中相机的逆视图矩阵
+        Matrix4.multiply(this._sightlineCamera.getViewProjection(), inverseView, this._sightlineMatrix); // 计算投影矩阵
     };
 
     Sightline.prototype.updateCamera = function(camera) {
@@ -200,18 +205,15 @@ define([
     };
 
     Sightline.prototype.updatePass = function(context, sightlinePass) {
-        // clearFramebuffer(this, context, sightlinePass);
-        destroyFramebuffer(this);
-        createFramebufferDepth(this, context);
+        clearFramebuffer(this, context, sightlinePass);
+        // destroyFramebuffer(this);
+        // createFramebufferDepth(this, context);
     };
 
     function updateCameras(sightline, frameState) {
-        var camera = frameState.camera;
-        var viewCamera = sightline._viewCamera;
+        sightline._sightlineCamera.clone(sightline._viewCamera);  // 将视点相机更新到sightlineCamera
         var sceneCamera = sightline._sceneCamera;
-        var sightlineCamera = sightline._sightlineCamera;
-        sightlineCamera.clone(viewCamera);
-        sightline._sceneCamera = Camera.clone(camera, sceneCamera);
+        sightline._sceneCamera = Camera.clone(frameState.camera, sceneCamera);  // 将场景相机更新到sceneCamera
     }
 
     function updateFramebuffer(sightline, context) {
@@ -242,6 +244,14 @@ define([
 
         sightline._depthAttachment = sightline._depthAttachment && sightline._depthAttachment.destroy();
         sightline._colorAttachment = sightline._colorAttachment && sightline._colorAttachment.destroy();
+    }
+
+    function clearFramebuffer(sightline, context, sightlinePass) {
+        sightlinePass = defaultValue(sightlinePass, 0);
+        if(sightlinePass === 0){
+            sightline._clearCommand.framebuffer = sightline._pass.framebuffer;
+            sightline._clearCommand.execute(context, sightline._clearPassState);
+        }
     }
 
     function createFramebufferDepth(sightline, context) {
@@ -291,17 +301,24 @@ define([
     var SightlineAppearanceFS = "uniform sampler2D u_depthTexture; \n"+
         "uniform vec4 u_visibleColor; \n" +
         "uniform vec4 u_invisibleColor; \n" +
-        "uniform mat4 u_sightlineMatrix; \n" +
+        "uniform mat4 u_sightlineMatrix; \n" +   // 投影矩阵
+        '#ifdef LOG_DEPTH \n' +
+        'varying vec3 v_logPositionEC; \n' +
+        '#endif \n' +
         "vec4 getPositionEC(){ \n" +
-        "    return czm_windowToEyeCoordinates(gl_FragCoord); \n" +
+        '#ifndef LOG_DEPTH \n' +
+        '    return czm_windowToEyeCoordinates(gl_FragCoord); \n' +
+        '#else \n' +
+        '    return vec4(v_logPositionEC, 1.0); \n' +
+        '#endif \n'+
         "} \n" +
         "void main() { \n" +
-        "    vec4 positionEC = getPositionEC(); \n" +
-        "    vec4 sightlinePosition = u_sightlineMatrix * positionEC; \n" +
+        "    vec4 positionEC = getPositionEC(); \n" +  // 获得视图坐标
+        "    vec4 sightlinePosition = u_sightlineMatrix * positionEC; \n" +  //  获得平面坐标
         "    sightlinePosition /= sightlinePosition.w; \n" +
-        "    vec2 texCoords = sightlinePosition.xy; \n" +
-        "    float depth = sightlinePosition.z; \n" +
-        "    vec4 realDepth = texture2D(u_depthTexture, texCoords); \n" +
+        "    vec2 texCoords = sightlinePosition.xy; \n" +  // 纹理坐标
+        "    float depth = sightlinePosition.z; \n" +  // 通视线的片段的深度
+        "    vec4 realDepth = texture2D(u_depthTexture, texCoords); \n" +  // 深度图的深度
         "    if(depth > realDepth.r){ \n" +
         "       gl_FragColor = u_invisibleColor; \n" +
         "    } \n" +
@@ -309,6 +326,8 @@ define([
         "    { \n" +
         "       gl_FragColor = u_visibleColor; \n" +
         "    } \n" +
+        // "       gl_FragColor = vec4(realDepth.r ,0.0, 0.0, 1.0); \n" +
+        // "       gl_FragColor = vec4(1.0 ,0.0, 0.0, depth); \n" +
         "} \n";
 
     /**
@@ -359,6 +378,7 @@ define([
         this.update(this._scene.frameState);
         this._polylines.removeAll();
         var appearance = new PolylineMaterialAppearance({
+            // vertexShaderSource: SightlineAppearanceVS,
             fragmentShaderSource: SightlineAppearanceFS,
             renderState:RenderState.fromCache({
                 depthTest: {

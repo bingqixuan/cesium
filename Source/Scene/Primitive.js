@@ -1596,6 +1596,24 @@ define([
         var fs = appearance.getFragmentShaderSource();
         fs = appendPickToFragmentShader(fs);
 
+        if(frameState.camera._scene._logDepthBuffer && primitive.appearance.uniforms && primitive.appearance.uniforms['u_sightlineMatrix']){
+            var SightlineAppearanceVS = `
+            varying vec3 v_logPositionEC;\n\
+            `;
+            // fs = '#define SHADOW_MAP\n' + fs;
+            vs = SightlineAppearanceVS + vs;
+
+            fs = new ShaderSource({
+                sources: [fs],
+                defines:['LOG_DEPTH']
+            });
+
+            vs = new ShaderSource({
+                sources: [vs],
+                defines:['LOG_DEPTH']
+            });
+        }
+
         primitive._sp = ShaderProgram.replaceCache({
             context : context,
             shaderProgram : primitive._sp,

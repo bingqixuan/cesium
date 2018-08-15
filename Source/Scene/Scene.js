@@ -52,6 +52,7 @@ define([
         '../Renderer/Texture',
         './BrdfLutGenerator',
         './Camera',
+        './Cesium3DTileset',
         './CreditDisplay',
         './DebugCameraPrimitive',
         './DepthPlane',
@@ -64,6 +65,7 @@ define([
         './InvertClassification',
         './JobScheduler',
         './MapMode2D',
+        './Model',
         './OIT',
         './PerformanceDisplay',
         './PerInstanceColorAppearance',
@@ -133,6 +135,7 @@ define([
         Texture,
         BrdfLutGenerator,
         Camera,
+        Cesium3DTileset,
         CreditDisplay,
         DebugCameraPrimitive,
         DepthPlane,
@@ -145,6 +148,7 @@ define([
         InvertClassification,
         JobScheduler,
         MapMode2D,
+        Model,
         OIT,
         PerformanceDisplay,
         PerInstanceColorAppearance,
@@ -291,7 +295,8 @@ define([
         this._primitives = new PrimitiveCollection();
         this._groundPrimitives = new PrimitiveCollection();
 
-        this._logDepthBuffer = context.fragmentDepth;
+        // this._logDepthBuffer = context.fragmentDepth;
+        this._logDepthBuffer = undefined;
         this._logDepthBufferDirty = true;
         this._updateFrustums = false;
 
@@ -2458,6 +2463,10 @@ define([
             us.updatePass(Pass.TRANSLUCENT);
             commands = frustumCommands.commands[Pass.TRANSLUCENT];
             commands.length = frustumCommands.indices[Pass.TRANSLUCENT];
+            // if(commands.length > 0){
+            //     commands[0]._shaderProgram._vertexShaderText = "#define LOG_DEPTH \n" + commands[0]._shaderProgram._vertexShaderText;
+            //     commands[0]._shaderProgram._fragmentShaderText = "#define LOG_DEPTH \n" + commands[0]._shaderProgram._fragmentShaderText;
+            // }
             executeTranslucentCommands(scene, executeCommand, passState, commands, invertClassification);
 
             if (defined(globeDepth) && (environmentState.useGlobeDepthFramebuffer || depthOnly) && scene.useDepthPicking) {
@@ -2848,6 +2857,8 @@ define([
             if (!depthOnly) {
                 executeComputeCommands(scene);
                 executeShadowMapCastCommands(scene);
+                // 执行通视分析代码
+                executeSightlineCommands(scene);
             }
         }
 
@@ -2983,6 +2994,11 @@ define([
 
         updateDebugFrustumPlanes(scene);
         updateShadowMaps(scene);
+
+        // 更新通视分析状态
+        if(scene.sightline){
+            scene.sightline.update(scene.frameState);
+        }
 
         if (scene._globe) {
             scene._globe.render(frameState);
@@ -3153,6 +3169,39 @@ define([
         functions.length = 0;
     }
 
+    // 绘制视锥下的framebuffer
+    function executeSightlineCommands(scene) {
+        if(scene.enableSightline){
+            // var frameState = scene.frameState;
+            var sightline = scene.sightline;
+            var context = scene.context;
+            var uniformState = context.uniformState;
+
+            var pass = sightline._pass;
+            pass.commandList.length = 0;
+
+            var sceneCommands = scene.frameState.commandList;
+            var length = sceneCommands.length;
+            for(var j = 0; j < length; ++j){
+                var cmd = sceneCommands[j];
+                if(cmd.owner && cmd.owner.primitive){
+                    if(cmd.owner.primitive.constructor == Cesium3DTileset|| cmd.owner.primitive.constructor == Model){
+                        pass.commandList.push(cmd);
+                    }
+                }
+            }
+
+            uniformState.updateCamera(pass.camera);  // 使视锥体状态与相机状态同步
+            sightline.updatePass(context);
+
+            var numberOfCommands = pass.commandList.length;
+            for(var i = 0; i < numberOfCommands; ++i){
+                var command = pass.commandList[i];
+                uniformState.updatePass(command.pass);
+                executeCommand(command, scene, context, pass.passState);
+            }
+        }
+    }
     /**
      * @private
      */
