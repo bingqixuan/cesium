@@ -92,7 +92,8 @@ define([
 
         if (typeof fragmentShaderSource === 'string') {
             fragmentShaderSource = new ShaderSource({
-                sources : [fragmentShaderSource]
+                sources : [fragmentShaderSource],
+                defines : options.defines ? options.defines : []
             });
         }
 

@@ -1523,6 +1523,7 @@ define([
         var length = tiles.length;
 
         // Process tiles in the PROCESSING state so they will eventually move to the READY state.
+        // 在PROCESSING状态下处理瓦片，这样它们最终将移动到READY状态下。
         for (var i = 0; i < length; ++i) {
             tiles[i].process(tileset, frameState);
         }
@@ -1869,8 +1870,8 @@ define([
 
         this._skipLevelOfDetail = this.skipLevelOfDetail && !defined(this._classificationType) && !this._disableSkipLevelOfDetail;
 
-        // Do not do out-of-core operations (new content requests, cache removal,
-        // process new tiles) during the pick pass.
+        // Do not do out-of-core operations (new content requests, cache removal, process new tiles) during the pick pass.
+        // 在pick层中不要做核心之外的操作(创建新的内容请求、缓存删除、处理新的瓦片)。
         var passes = frameState.passes;
         var isPick = (passes.pick && !passes.render);
         var outOfCore = !isPick;

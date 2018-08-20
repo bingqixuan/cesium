@@ -38,43 +38,42 @@ define([
     '../Scene/PolylineMaterialAppearance',
     '../Scene/Primitive',
     '../Scene/PrimitiveCollection'
-], function(
-    BoundingRectangle,
-    BoundingSphere,
-    Cartesian2,
-    Cartesian3,
-    Cartographic,
-    Color,
-    ColorGeometryInstanceAttribute,
-    defaultValue,
-    defined,
-    destroyObject,
-    DeveloperError,
-    Ellipsoid,
-    Math,
-    Matrix4,
-    GeometryInstance,
-    PixelFormat,
-    PolylineGeometry,
-    WebGLConstants,
-    CallbackProperty,
-    ClearCommand,
-    ContextLimits,
-    Framebuffer,
-    PassState,
-    PixelDatatype,
-    RenderState,
-    Sampler,
-    Texture,
-    TextureMagnificationFilter,
-    TextureMinificationFilter,
-    TextureWrap,
-    Camera,
-    Material,
-    PerInstanceColorAppearance,
-    PolylineMaterialAppearance,
-    Primitive,
-    PrimitiveCollection) {
+], function (BoundingRectangle,
+             BoundingSphere,
+             Cartesian2,
+             Cartesian3,
+             Cartographic,
+             Color,
+             ColorGeometryInstanceAttribute,
+             defaultValue,
+             defined,
+             destroyObject,
+             DeveloperError,
+             Ellipsoid,
+             Math,
+             Matrix4,
+             GeometryInstance,
+             PixelFormat,
+             PolylineGeometry,
+             WebGLConstants,
+             CallbackProperty,
+             ClearCommand,
+             ContextLimits,
+             Framebuffer,
+             PassState,
+             PixelDatatype,
+             RenderState,
+             Sampler,
+             Texture,
+             TextureMagnificationFilter,
+             TextureMinificationFilter,
+             TextureWrap,
+             Camera,
+             Material,
+             PerInstanceColorAppearance,
+             PolylineMaterialAppearance,
+             Primitive,
+             PrimitiveCollection) {
     'use strict';
 
     /**
@@ -124,7 +123,7 @@ define([
         // this._scene.globe.depthTestAgainstTerrain = true;
     }
 
-    function SightlinePass(context){
+    function SightlinePass(context) {
         this.camera = new SightlineCamera();
         this.passState = new PassState(context);
         this.framebuffer = undefined;
@@ -145,7 +144,7 @@ define([
         this.viewProjectionMatrix = new Matrix4();
     }
 
-    SightlineCamera.prototype.clone = function(camera) {
+    SightlineCamera.prototype.clone = function (camera) {
         Matrix4.clone(camera.viewMatrix, this.viewMatrix);
         Matrix4.clone(camera.inverseViewMatrix, this.inverseViewMatrix);
         Matrix4.clone(camera.viewProjectionMatrix, this.viewProjectionMatrix);
@@ -159,7 +158,7 @@ define([
 
     var scaleBiasMatrix = new Matrix4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
 
-    SightlineCamera.prototype.getViewProjection = function() {
+    SightlineCamera.prototype.getViewProjection = function () {
         var view = this.viewMatrix;
         var projection = this.frustum.projectionMatrix;
         Matrix4.multiply(projection, view, this.viewProjectionMatrix);
@@ -184,11 +183,11 @@ define([
         var biasY = viewport.y / textureSize.y;
         var scaleX = viewport.width / textureSize.x;
         var scaleY = viewport.height / textureSize.y;
-        pass.textureOffsets = new Matrix4(scaleX, 0.0, 0.0, biasX, 0.0, scaleY, 0,0, biasY, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+        pass.textureOffsets = new Matrix4(scaleX, 0.0, 0.0, biasX, 0.0, scaleY, 0, 0, biasY, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
     }
 
-    Sightline.prototype.update = function(frameState) {
-        if(!this._viewCamera){
+    Sightline.prototype.update = function (frameState) {
+        if (!this._viewCamera) {
             return;
         }
 
@@ -200,11 +199,11 @@ define([
         Matrix4.multiply(this._sightlineCamera.getViewProjection(), inverseView, this._sightlineMatrix); // 计算投影矩阵
     };
 
-    Sightline.prototype.updateCamera = function(camera) {
+    Sightline.prototype.updateCamera = function (camera) {
         this._viewCamera = camera;
     };
 
-    Sightline.prototype.updatePass = function(context, sightlinePass) {
+    Sightline.prototype.updatePass = function (context, sightlinePass) {
         clearFramebuffer(this, context, sightlinePass);
         // destroyFramebuffer(this);
         // createFramebufferDepth(this, context);
@@ -217,7 +216,7 @@ define([
     }
 
     function updateFramebuffer(sightline, context) {
-        if(!defined(sightline._pass.framebuffer) || sightline._sightlineTexture.width !== sightline._textureSize.x){
+        if (!defined(sightline._pass.framebuffer) || sightline._sightlineTexture.width !== sightline._textureSize.x) {
             destroyFramebuffer(sightline);
             createFramebufferDepth(sightline, context);
             checkFramebuffer(sightline, context);
@@ -226,7 +225,7 @@ define([
     }
 
     function checkFramebuffer(sightline, context) {
-        if(!defined(sightline._usesDepthTexture) && (sightline._pass.framebuffer.status !== WebGLConstants.FRAMEBUFFER_COMPLETE)){
+        if (!defined(sightline._usesDepthTexture) && (sightline._pass.framebuffer.status !== WebGLConstants.FRAMEBUFFER_COMPLETE)) {
             sightline._usesDepthTexture = false;
             // createRenderStates(sightline);
             destroyFramebuffer(sightline);
@@ -237,7 +236,7 @@ define([
     function destroyFramebuffer(sightline) {
         var pass = sightline._pass;
         var framebuffer = pass.framebuffer;
-        if(defined(framebuffer) && !framebuffer.isDestroyed()){
+        if (defined(framebuffer) && !framebuffer.isDestroyed()) {
             framebuffer.destroy();
         }
         pass.framebuffer = undefined;
@@ -248,7 +247,7 @@ define([
 
     function clearFramebuffer(sightline, context, sightlinePass) {
         sightlinePass = defaultValue(sightlinePass, 0);
-        if(sightlinePass === 0){
+        if (sightlinePass === 0) {
             sightline._clearCommand.framebuffer = sightline._pass.framebuffer;
             sightline._clearCommand.execute(context, sightline._clearPassState);
         }
@@ -298,19 +297,19 @@ define([
         });
     }
 
-    var SightlineAppearanceFS = "uniform sampler2D u_depthTexture; \n"+
+    var SightlineAppearanceFS = "uniform sampler2D u_depthTexture; \n" +
         "uniform vec4 u_visibleColor; \n" +
         "uniform vec4 u_invisibleColor; \n" +
         "uniform mat4 u_sightlineMatrix; \n" +   // 投影矩阵
-        '#ifdef LOG_DEPTH \n' +
-        'varying vec3 v_logPositionEC; \n' +
-        '#endif \n' +
+        "#ifdef LOG_DEPTH \n" +
+        "varying vec3 v_logPositionEC; \n" +
+        "#endif \n" +
         "vec4 getPositionEC(){ \n" +
-        '#ifndef LOG_DEPTH \n' +
-        '    return czm_windowToEyeCoordinates(gl_FragCoord); \n' +
-        '#else \n' +
-        '    return vec4(v_logPositionEC, 1.0); \n' +
-        '#endif \n'+
+        "#ifndef LOG_DEPTH \n" +
+        "    return czm_windowToEyeCoordinates(gl_FragCoord); \n" +
+        "#else \n" +
+        "    return vec4(v_logPositionEC, 1.0); \n" +
+        "#endif \n" +
         "} \n" +
         "void main() { \n" +
         "    vec4 positionEC = getPositionEC(); \n" +  // 获得视图坐标
@@ -334,7 +333,7 @@ define([
      * 设置通视分析的视点位置
      * @param {Cartesian3} viewPosition  视点位置坐标
      */
-    Sightline.prototype.setViewPosition = function(viewPosition) {
+    Sightline.prototype.setViewPosition = function (viewPosition) {
         if (!defined(viewPosition)) {
             throw new DeveloperError('视点位置获取失败');
         }
@@ -345,14 +344,14 @@ define([
      * 设置通视分析的目标点位置
      * @param targetPosition
      */
-    Sightline.prototype.setTargetPosition = function(targetPosition) {
+    Sightline.prototype.setTargetPosition = function (targetPosition) {
         if (!defined(targetPosition)) {
             throw new DeveloperError('位置获取失败');
         }
         this._targetPosition = targetPosition;
 
         var distance = Cartesian3.distance(this._viewPosition, this._targetPosition);
-        if(distance <= 0){
+        if (distance <= 0) {
             return;
         }
         this.updatePass(this._scene.context);
@@ -368,10 +367,10 @@ define([
         this._viewCamera.frustum.near = 0.05;
         this._viewCamera.frustum.far = Cartesian3.distance(this._viewPosition, this._targetPosition);
 
-        if(this._viewCamera.frustum.near >= this._viewCamera.frustum.far){
+        if (this._viewCamera.frustum.near >= this._viewCamera.frustum.far) {
             return false;
         }
-        if(!this._scene.enableSightline){
+        if (!this._scene.enableSightline) {
             this._scene.enableSightline = true;
         }
 
@@ -380,7 +379,7 @@ define([
         var appearance = new PolylineMaterialAppearance({
             // vertexShaderSource: SightlineAppearanceVS,
             fragmentShaderSource: SightlineAppearanceFS,
-            renderState:RenderState.fromCache({
+            renderState: RenderState.fromCache({
                 depthTest: {
                     enabled: this._sightlineDepthTest
                 }
@@ -393,16 +392,16 @@ define([
             u_sightlineMatrix: this._sightlineMatrix
         };
         this._sightlinePrimitive = this._polylines.add(new Primitive({
-            geometryInstances : new GeometryInstance({
-                geometry : new PolylineGeometry({
-                    positions : [this._viewPosition, this._targetPosition],
-                    width : 3.0
+            geometryInstances: new GeometryInstance({
+                geometry: new PolylineGeometry({
+                    positions: [this._viewPosition, this._targetPosition],
+                    width: 3.0
                 }),
-                attributes : {
-                    color : ColorGeometryInstanceAttribute.fromColor(Color.AQUA)
+                attributes: {
+                    color: ColorGeometryInstanceAttribute.fromColor(Color.AQUA)
                 }
             }),
-            appearance : appearance,
+            appearance: appearance,
             allowPicking: false
         }));
     };
@@ -411,7 +410,7 @@ define([
      * 结束通视分析
      * @param endPosition
      */
-    Sightline.prototype.end = function(endPosition) {
+    Sightline.prototype.end = function (endPosition) {
         if (!defined(endPosition)) {
             throw new DeveloperError('结束位置获取失败');
         }
@@ -421,7 +420,7 @@ define([
     /**
      * 销毁可视分析对象
      */
-    Sightline.prototype.destroy = function() {
+    Sightline.prototype.destroy = function () {
         this._scene.sightline = null;
         this._scene.enableSightline = false;
         this._sightlineTexture.destroy();

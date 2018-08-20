@@ -462,7 +462,7 @@ define([
         this._model.shadows = this._tileset.shadows;
         this._model.debugWireframe = this._tileset.debugWireframe;
 
-        // Update clipping planes
+        // 更新裁剪面
         var tilesetClippingPlanes = this._tileset.clippingPlanes;
         if (this._tile.clippingPlanesDirty && defined(tilesetClippingPlanes)) {
             // Dereference the clipping planes from the model if they are irrelevant.

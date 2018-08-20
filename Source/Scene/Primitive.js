@@ -1597,9 +1597,7 @@ define([
         fs = appendPickToFragmentShader(fs);
 
         if(frameState.camera._scene._logDepthBuffer && primitive.appearance.uniforms && primitive.appearance.uniforms['u_sightlineMatrix']){
-            var SightlineAppearanceVS = `
-            varying vec3 v_logPositionEC;\n\
-            `;
+            var SightlineAppearanceVS = "varying vec3 v_logPositionEC;\n ";
             // fs = '#define SHADOW_MAP\n' + fs;
             vs = SightlineAppearanceVS + vs;
 

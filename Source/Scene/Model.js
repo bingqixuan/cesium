@@ -1954,6 +1954,7 @@ define([
             '    gltf_blend_main(); \n';
 
         // Un-premultiply the alpha so that blending is correct.
+        // 取消预乘alpha，以便混合是正确的。
 
         // Avoid divide-by-zero. The code below is equivalent to:
         // if (gl_FragColor.a > 0.0)
@@ -1976,6 +1977,8 @@ define([
 
         return shader;
     }
+
+
 
     function modifyShader(shader, programName, callback) {
         if (defined(callback)) {
@@ -2002,8 +2005,8 @@ define([
 
     ///////////////////////////////////////////////////////////////////////////
 
-    // When building programs for the first time, do not include modifiers for clipping planes and color
-    // since this is the version of the program that will be cached for use with other Models.
+    // When building programs for the first time, do not include modifiers for clipping planes and color since this is the version of the program that will be cached for use with other Models.
+    // 当第一次构建程序时，不要包含用于剪切平面和颜色的修饰符，因为这是将被缓存用于其他模型的程序版本。
     function createProgram(id, model, context) {
         var program = model._sourcePrograms[id];
         var shaders = model._sourceShaders;
@@ -2036,6 +2039,16 @@ define([
         if (!defined(model._uniformMapLoaded)) {
             drawFS = 'uniform vec4 czm_pickColor;\n' + drawFS;
         }
+
+        // 增加后期处理效果
+        var s = '#ifdef APPLY_BRIGHTNESS \n' +
+            'uniform float u_brightness;\n' +
+            'uniform float u_contrast;\n' +
+            'uniform float u_hue;\n' +
+            'uniform float u_saturation;\n' +
+            '#endif \n';
+        drawFS = s + drawFS;
+        drawFS = ModelUtility.modifyFragmentShaderForBrightness(drawFS);
 
         createAttributesAndProgram(id, drawFS, drawVS, model, context);
     }
@@ -2098,7 +2111,8 @@ define([
             context : context,
             vertexShaderSource : drawVS,
             fragmentShaderSource : drawFS,
-            attributeLocations : attributeLocations
+            attributeLocations : attributeLocations,
+            defines : ['APPLY_BRIGHTNESS']
         });
     }
 
@@ -2112,8 +2126,8 @@ define([
             return;
         }
 
-        // PERFORMANCE_IDEA: this could be more fine-grained by looking
-        // at the shader's bufferView's to determine the buffer dependencies.
+        // PERFORMANCE_IDEA: this could be more fine-grained by looking at the shader's bufferView's to determine the buffer dependencies.
+        // 关于性能的想法：通过查看着色器的bufferView来确定缓冲区依赖关系，这可能会更加精细。
         if (loadResources.pendingBufferLoads !== 0) {
             return;
         }
@@ -2898,25 +2912,23 @@ define([
                 var jointMatrixUniformName;
                 var morphWeightsUniformName;
 
-                // Uniform parameters
+                // Uniform 参数
                 for (var name in uniforms) {
                     if (uniforms.hasOwnProperty(name) && name !== 'extras') {
                         var parameterName = uniforms[name];
                         var parameter = parameters[parameterName];
 
-                        // GLTF_SPEC: This does not take into account uniform arrays,
-                        // indicated by parameters with a count property.
-                        //
+                        // GLTF_SPEC: This does not take into account uniform arrays, indicated by parameters with a count property.
+                        // 这没有考虑到均匀数组，由带有count属性的参数表示。
                         // https://github.com/KhronosGroup/glTF/issues/258
 
-                        // GLTF_SPEC: In this implementation, material parameters with a
-                        // semantic or targeted via a source (for animation) are not
-                        // targetable for material animations.  Is this too strict?
-                        //
+                        // GLTF_SPEC: In this implementation, material parameters with a semantic or targeted via a source (for animation) are not targetable for material animations.  Is this too strict?
+                        // 在此实现中，具有语义的或通过源(用于动画)定向的材料参数不是材料动画的目标。这是太严格了吗?
                         // https://github.com/KhronosGroup/glTF/issues/142
 
                         if (defined(instanceParameters[parameterName])) {
                             // Parameter overrides by the instance technique
+                            // 通过实例technique覆盖参数
                             var uv = ModelUtility.createUniformFunction(parameter.type, instanceParameters[parameterName], textures, defaultTexture);
                             uniformMap[name] = uv.func;
                             uniformValues[parameterName] = uv;
@@ -2929,10 +2941,12 @@ define([
                                 morphWeightsUniformName = name;
                             } else {
                                 // Map glTF semantic to Cesium automatic uniform
+                                // 将 glTF 语义映射到Cesium的自动 uniform
                                 uniformMap[name] = ModelUtility.getGltfSemanticUniforms()[parameter.semantic](context.uniformState, model);
                             }
                         } else if (defined(parameter.value)) {
                             // Technique value that isn't overridden by a material
+                            // 不被material覆盖的Technique值
                             var uv2 = ModelUtility.createUniformFunction(parameter.type, parameter.value, textures, defaultTexture);
                             uniformMap[name] = uv2.func;
                             uniformValues[parameterName] = uv2;
@@ -2945,6 +2959,26 @@ define([
                 u.values = uniformValues;                           // material parameter name -> ModelMaterial for modifying the parameter at runtime
                 u.jointMatrixUniformName = jointMatrixUniformName;
                 u.morphWeightsUniformName = morphWeightsUniformName;
+
+                u.uniformMap['u_brightness'] = function(){
+                    return context.uniformState.gltf_brightness ? context.uniformState.gltf_brightness : 1.0;
+                };
+                u.uniformMap['u_contrast'] = function(){
+                    return context.uniformState.gltf_contrast ? context.uniformState.gltf_contrast : 1.0;
+                };
+                u.uniformMap['u_hue'] = function(){
+                    return context.uniformState.gltf_hue ? context.uniformState.gltf_hue : 0.0;
+                };
+                u.uniformMap['u_saturation'] = function(){
+                    return context.uniformState.gltf_saturation ? context.uniformState.gltf_saturation : 1.0;
+                };
+
+                var b = ModelUtility.createUniformFunction(5126, 1.0, {}, defaultTexture);
+                var c = ModelUtility.createUniformFunction(5126, 0.0, {}, defaultTexture);
+                u.values['u_brightness'] = b;
+                u.values['u_contrast'] = b;
+                u.values['u_hue'] = c;
+                u.values['u_saturation'] = b;
             }
         }
     }
@@ -3355,6 +3389,7 @@ define([
         var scene3DOnly = frameState.scene3DOnly;
 
         // Retain references to updated source shaders and programs for rebuilding as needed
+        // 保留对更新的源着色器和程序的引用，以便根据需要进行重新构建
         var programs = model._sourcePrograms = model.gltf.programs;
         var shaders = model._sourceShaders = model.gltf.shaders;
         model._hasPremultipliedAlpha = hasPremultipliedAlpha(model);
@@ -3400,7 +3435,7 @@ define([
             model._cachedGeometryByteLength += getGeometryByteLength(cachedResources.buffers);
             model._cachedTexturesByteLength += getTexturesByteLength(cachedResources.textures);
         } else {
-            createBuffers(model, frameState); // using glTF bufferViews
+            createBuffers(model, frameState); // 使用 glTF bufferViews
             createPrograms(model, frameState);
             createSamplers(model, context);
             loadTexturesFromBufferViews(model);
@@ -3418,7 +3453,7 @@ define([
             // Could use copy-on-write if it is worth it.  Probably overkill.
         }
 
-        createUniformMaps(model, context);               // using glTF materials/techniques
+        createUniformMaps(model, context);               // 使用 glTF materials/techniques
         createRuntimeNodes(model, context, scene3DOnly); // using glTF scene
     }
 
@@ -4240,9 +4275,10 @@ define([
         if (this._state === ModelState.LOADING) {
             // Transition from LOADING -> LOADED once resources are downloaded and created.
             // Textures may continue to stream in while in the LOADED state.
+            // 下载并创建资源后，从 LOADING 转到 LOADED 状态。在 LOADED 状态下，纹理可能会继续流入
             if (loadResources.pendingBufferLoads === 0) {
                 if (!loadResources.initialized) {
-                    // glTF pipeline updates
+                    // glTF 管道更新。
                     var options = {
                         optimizeForCesium: true,
                         addBatchIdToGeneratedShaders : this._addBatchIdToGeneratedShaders

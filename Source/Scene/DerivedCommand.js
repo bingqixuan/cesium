@@ -104,10 +104,12 @@ define([
     }
 
     DerivedCommand.createDepthOnlyDerivedCommand = function(scene, command, context, result) {
-        // For a depth only pass, we bind a framebuffer with only a depth attachment (no color attachments),
-        // do not write color, and write depth. If the fragment shader doesn't modify the fragment depth
-        // or discard, the driver can replace the fragment shader with a pass-through shader. We're unsure if this
-        // actually happens so we modify the shader to use a pass-through fragment shader.
+        // For a depth only pass, we bind a framebuffer with only a depth attachment (no color attachments), do not write color, and write depth.
+        // 对于只传递深度的pass，我们使用深度附件(没有颜色附件)绑定framebuffer，不写颜色，只写深度。
+        // If the fragment shader doesn't modify the fragment depth or discard, the driver can replace the fragment shader with a pass-through shader.
+        // 如果片段着色器没有修改片段深度或丢弃，驱动程序可以用直通着色器替换片段着色器。
+        // We're unsure if this actually happens so we modify the shader to use a pass-through fragment shader.
+        // 我们不确定这是否真的发生，所以我们修改着色器来使用一个传递片段着色器。
 
         if (!defined(result)) {
             result = {};

@@ -87,15 +87,14 @@ define([
         });
         appearance.uniforms = {
             u_color: this._color,
-            u_size: this._size,
-
+            u_size: this._size
         };
         this._primitive = new Primitive({
             geometryInstances: new GeometryInstance({
                 geometry: new EllipseGeometry({
                     center : this._position,
-                    semiMinorAxis : 500000.0,
-                    semiMajorAxis : 500000.0
+                    semiMinorAxis : this._size * 100,
+                    semiMajorAxis : this._size * 100
                 }),
                 attributes : {
                     color : ColorGeometryInstanceAttribute.fromColor(Color.AQUA)

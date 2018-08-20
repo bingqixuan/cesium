@@ -1138,6 +1138,7 @@ define([
 
     /**
      * Processes the tile's content, e.g., create WebGL resources, to move from the PROCESSING to READY state.
+     * 处理瓦片的内容，例如创建WebGL资源，使其从PROCESSING状态转移到READY状态。
      *
      * @param {Cesium3DTileset} tileset The tileset containing this tile.
      * @param {FrameState} frameState The frame state.
