@@ -2041,14 +2041,14 @@ define([
         }
 
         // 增加后期处理效果
-        var s = '#ifdef APPLY_BRIGHTNESS \n' +
+        var s = '#ifdef APPLY_COLORCORRECTION \n' +
             'uniform float u_brightness;\n' +
             'uniform float u_contrast;\n' +
             'uniform float u_hue;\n' +
             'uniform float u_saturation;\n' +
             '#endif \n';
         drawFS = s + drawFS;
-        drawFS = ModelUtility.modifyFragmentShaderForBrightness(drawFS);
+        drawFS = ModelUtility.modifyFragmentShaderForColorCorrection(drawFS);
 
         createAttributesAndProgram(id, drawFS, drawVS, model, context);
     }
@@ -2112,8 +2112,9 @@ define([
             vertexShaderSource : drawVS,
             fragmentShaderSource : drawFS,
             attributeLocations : attributeLocations,
-            defines : ['APPLY_BRIGHTNESS']
+            defines : context.uniformState.gltf_ccshow ? ['APPLY_COLORCORRECTION'] : []  // 若开启了模型颜色校正，则添加该定义
         });
+        model.ccshow = context.uniformState.gltf_ccshow; // 保存颜色校正状态
     }
 
     var scratchCreateProgramJob = new CreateProgramJob();
@@ -4451,7 +4452,7 @@ define([
             updateShadows(this);
             updateClippingPlanes(this, frameState);
 
-            // Regnerate shaders if ClippingPlaneCollection state changed or it was removed
+            // 如果 ClippingPlaneCollection 的状态改变或被移除则重新构造shader
             var clippingPlanes = this._clippingPlanes;
             var currentClippingPlanesState = 0;
             if (defined(clippingPlanes) && clippingPlanes.enabled) {
@@ -4462,11 +4463,17 @@ define([
             var shouldRegenerateShaders = this._clippingPlanesState !== currentClippingPlanesState;
             this._clippingPlanesState = currentClippingPlanesState;
 
-            // Regenerate shaders if color shading changed from last update
+            // 如果颜色着色相比于上次发生了改变就重新生成着色器，
             var currentlyColorShadingEnabled = isColorShadingEnabled(this);
             if (currentlyColorShadingEnabled !== this._colorShadingEnabled) {
                 this._colorShadingEnabled = currentlyColorShadingEnabled;
                 shouldRegenerateShaders = true;
+            }
+
+            // 若模型颜色校正状态发生改变，则需要重新生成shader
+            if (this.ccshow !== frameState.context._us.gltf_ccshow){
+                shouldRegenerateShaders = true;
+                this.ccshow = frameState.context._us.gltf_ccshow;
             }
 
             if (shouldRegenerateShaders) {
@@ -4567,7 +4574,7 @@ define([
         var cachedRendererResources = model._cachedRendererResources;
         destroyIfNotCached(rendererResources, cachedRendererResources);
 
-        if (isClippingEnabled(model) || isColorShadingEnabled(model)) {
+        if (isClippingEnabled(model) || isColorShadingEnabled(model) || !frameState.context._us.gltf_ccshow) {
             rendererResources.programs = {};
             rendererResources.silhouettePrograms = {};
 

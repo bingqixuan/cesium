@@ -400,14 +400,14 @@ define([
     };
 
     // 添加后期处理效果
-    ModelUtility.modifyFragmentShaderForBrightness = function(shader) {
+    ModelUtility.modifyFragmentShaderForColorCorrection = function(shader) {
         shader = ShaderSource.replaceMain(shader, 'czm_total_main');
         shader +=
             '\n' +
             'void main() \n' +
             '{ \n' +
             '    czm_total_main(); \n' +
-            '    #ifdef APPLY_BRIGHTNESS \n' +
+            '    #ifdef APPLY_COLORCORRECTION \n' +
             '         gl_FragColor.rgb = mix(vec3(0.0), gl_FragColor.rgb, u_brightness); \n' +
             '         gl_FragColor.rgb = mix(vec3(0.5), gl_FragColor.rgb, u_contrast); \n' +
             '         gl_FragColor.rgb = czm_hue(gl_FragColor.rgb, u_hue); \n' +
