@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<script id="cesium_sandcastle_script">
+    var viewer;
+    function startup(Cesium) {
+        'use strict';
+//Sandcastle_Begin
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            selectionIndicator : false,
+            infoBox : false
+        });
+
+        var scene = viewer.scene;
+        var clock = viewer.clock;
+        scene.globe.enableLighting = true;
+
+/////////////////////////////////////////////////////////////////////////
+        var scratchFindDaytimeDateA = new Cesium.JulianDate();
+        var scratchFindDaytimeMatrixA = new Cesium.Matrix3();
+        var scratchFindDaytimeCartesianA = new Cesium.Cartesian3();
+        var scratchFindDaytimeCartesianB = new Cesium.Cartesian3();
+        var scratchFindDaytimeCartesianC = new Cesium.Cartesian3();
+
+        function findDaytimeForPoint(position, currentTime, result) {
+            result = result || new Cesium.JulianDate();
+            currentTime.clone(result);
+
+            var posVector = Cesium.Cartesian3.normalize(position, scratchFindDaytimeCartesianA);
+            var highestDot = -2;
+
+            // During a 24-hour span, the Sun's apparent Inertial position doesn't change much.
+            var sunInertial = Cesium.Simon1994PlanetaryPositions.computeSunPositionInEarthInertialFrame(currentTime, scratchFindDaytimeCartesianB);
+
+            // Test the ECF position each hour over 24 hours (+/- 12 hours from current time).
+            var sampleTime = Cesium.JulianDate.addHours(currentTime, -12, scratchFindDaytimeDateA);
+            for (var h = 0; h < 24; ++h) {
+                var temeTransform = Cesium.Transforms.computeTemeToPseudoFixedMatrix(sampleTime, scratchFindDaytimeMatrixA);
+                var sunPositionWc = Cesium.Matrix3.multiplyByVector(temeTransform, sunInertial, scratchFindDaytimeCartesianC);
+                var sunVector = Cesium.Cartesian3.normalize(sunPositionWc, sunPositionWc);
+                var dotProduct = Cesium.Cartesian3.dot(posVector, sunVector);
+
+                if (dotProduct > highestDot) {
+                    highestDot = dotProduct;
+                    sampleTime.clone(result);
+                }
+
+                Cesium.JulianDate.addHours(sampleTime, 1, sampleTime);
+            }
+            return result;
+        }
+/////////////////////////////////////////////////////////////////////////
+
+        var entity = viewer.entities.add({
+            label : {
+                show : false,
+                showBackground : true,
+                font : '14px monospace',
+                horizontalOrigin : Cesium.HorizontalOrigin.LEFT,
+                verticalOrigin : Cesium.VerticalOrigin.TOP,
+                pixelOffset : new Cesium.Cartesian2(15, 0)
+            }
+        });
+
+        var handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
+        handler.setInputAction(function(e) {
+            var cartesian = viewer.camera.pickEllipsoid(e.position, scene.globe.ellipsoid);
+            if (cartesian) {
+                var cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+                var longitudeString = Cesium.Math.toDegrees(cartographic.longitude).toFixed(2);
+                var latitudeString = Cesium.Math.toDegrees(cartographic.latitude).toFixed(2);
+
+                entity.position = cartesian;
+                entity.label.show = true;
+                entity.label.text =
+                    'Lon: ' + ('   ' + longitudeString).slice(-7) + '\u00B0' +
+                    '\nLat: ' + ('   ' + latitudeString).slice(-7) + '\u00B0';
+
+                // Find a good time of day to show the clicked point.
+                clock.currentTime = findDaytimeForPoint(cartesian, clock.currentTime);
+
+            } else {
+                entity.label.show = false;
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+//Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</body>
+</html>
