@@ -16,6 +16,7 @@ define([
 
     /**
      * A collection of {@link PostProcessStage}s or other post-process composite stages that execute together logically.
+     * 一个{@link PostProcessStage}或其他逻辑上一起执行的后处理复合阶段的集合
      * <p>
      * All stages are executed in the order of the array. The input texture changes based on the value of <code>inputPreviousStageTexture</code>.
      * If <code>inputPreviousStageTexture</code> is <code>true</code>, the input to each stage is the output texture rendered to by the scene or of the stage that executed before it.
@@ -293,6 +294,7 @@ define([
 
     /**
      * A function that will be called before execute. Updates each post-process stage in the composite.
+     * 在执行之前被调用的函数。更新组合中的每个后处理阶段。
      * @param {Context} context The context.
      * @private
      */

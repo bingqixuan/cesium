@@ -391,9 +391,10 @@ define([
     };
 
     /**
-     * Creates a post-process stage that applies a bloom effect to the input texture.
+     * 创建一个后处理阶段，将bloom效果应用于输入纹理。
      * <p>
      * A bloom effect adds glow effect, makes bright areas brighter, and dark areas darker.
+     * 一个增加光晕的泛光效果，使明亮的区域更亮，黑暗的区域更暗。
      * </p>
      * <p>
      * This post-process stage has the following uniforms: <code>contrast</code>, <code>brightness</code>, <code>glowOnly</code>,

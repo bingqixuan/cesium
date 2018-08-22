@@ -462,6 +462,7 @@ define([
 
     /**
      * Called before the post-process stages in the collection are executed. Calls update for each stage and creates WebGL resources.
+     * 在执行集合中的后处理流程阶段之前调用。调用每个阶段的更新并创建WebGL资源。
      *
      * @param {Context} context The context.
      *
@@ -646,8 +647,8 @@ define([
             initialTexture = getOutputTexture(ao);
         }
         if (bloomEnabled && bloom.ready) {
-            execute(bloom, context, initialTexture, depthTexture, idTexture);
-            initialTexture = getOutputTexture(bloom);
+            // execute(bloom, context, initialTexture, depthTexture, idTexture);
+            // initialTexture = getOutputTexture(bloom);
         }
 
         var lastTexture = initialTexture;

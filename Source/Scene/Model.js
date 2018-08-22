@@ -2107,6 +2107,7 @@ define([
             }
         }
 
+        
         model._rendererResources.programs[id] = ShaderProgram.fromCache({
             context : context,
             vertexShaderSource : drawVS,

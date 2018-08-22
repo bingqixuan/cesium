@@ -250,6 +250,7 @@ define([
 
     /**
      * Called before the stages in the collection are executed. Creates the minimum amount of framebuffers for a post-process collection.
+     * 在执行集合中的各个阶段之前调用。为后处理集合创建最小的帧缓冲区
      *
      * @param {Context} context The context.
      */

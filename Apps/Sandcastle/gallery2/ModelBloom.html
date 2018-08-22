@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<div id="toolbar">
+    <table>
+        <tbody>
+        <tr>
+            <td>Bloom</td>
+            <td><input type="checkbox" data-bind="checked: bloomShow"></td>
+            <td><input type="range" min="0" max="1" step="0.01" data-bind="value: bloomValue, valueUpdate: 'input'"></td>
+        </tr>
+        </tbody></table>
+    <script id="cesium_sandcastle_script">
+        var viewer;
+        function startup(Cesium) {
+            'use strict';
+//Sandcastle_Begin
+            viewer = new Cesium.Viewer('cesiumContainer', {
+                infoBox: false,
+                selectionIndicator: false,
+                timeline: false,
+                animation: false,
+                scene3DOnly: true,
+                geocoder: false,
+                homeButton: false,
+                sceneModePicker: false,
+                navigationHelpButton: false,
+                imageryProvider : Cesium.createTileMapServiceImageryProvider({
+                    url : Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+                }),
+                baseLayerPicker : false
+            });
+
+            var tileset = new Cesium.Cesium3DTileset({
+                url: Cesium.IonResource.fromAssetId(5712)
+            });
+
+            viewer.scene.primitives.add(tileset);
+            viewer.zoomTo(tileset);
+
+            var viewModel = {
+                bloomShow: false,
+                bloomValue: 0.5
+            };
+
+            Cesium.knockout.track(viewModel);
+            var toolbar = document.getElementById('toolbar');
+            Cesium.knockout.applyBindings(viewModel, toolbar);
+            for (var name in viewModel) {
+                if (viewModel.hasOwnProperty(name)) {
+                    Cesium.knockout.getObservable(viewModel, name).subscribe(updatePostProcess);
+                }
+            }
+
+            if (!Cesium.PostProcessStageLibrary.isSilhouetteSupported(viewer.scene)) {
+                console.log('This browser does not support the silhouette post process.');
+            }
+
+//            var stages = viewer.scene.postProcessStages;
+//            var bloom = stages.add(Cesium.PostProcessStageLibrary.createBloomStage());
+                var bloom = viewer.scene.postProcessStages.bloom;
+            function updatePostProcess() {
+                bloom.enabled = Boolean(viewModel.bloomShow);
+                bloom.uniforms.brightness = Number(viewModel.bloomValue);
+            }
+            updatePostProcess();
+//Sandcastle_End
+            Sandcastle.finishedLoading();
+        }
+        if (typeof Cesium !== "undefined") {
+            startup(Cesium);
+        } else if (typeof require === "function") {
+            require(["Cesium"], startup);
+        }
+    </script>
+</body>
+</html>

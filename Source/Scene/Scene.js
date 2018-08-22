@@ -714,7 +714,7 @@ define([
         this.eyeSeparation = undefined;
 
         /**
-         * Post processing effects applied to the final render.
+         * 将后期处理效果应用于最终渲染。
          * @type {PostProcessStageCollection}
          */
         this.postProcessStages = new PostProcessStageCollection();
@@ -2193,7 +2193,7 @@ define([
         var depthOnly = passes.depth;
         var environmentState = scene._environmentState;
 
-        // Do not render environment primitives during a pick pass since they do not generate picking commands.
+        // 不要在 pick 层渲染环境primitive，因为它们不会生成拾取命令。
         if (!picking) {
             var skyBoxCommand = environmentState.skyBoxCommand;
             if (defined(skyBoxCommand)) {
@@ -2248,7 +2248,7 @@ define([
 
         var height2D = camera.position.z;
 
-        // Execute commands in each frustum in back to front order
+        // 在每个视锥体中执行从后到前的命令
         var j;
         var frustumCommandsList = scene._frustumCommandsList;
         var numFrustums = frustumCommandsList.length;
@@ -3185,7 +3185,7 @@ define([
             for(var j = 0; j < length; ++j){
                 var cmd = sceneCommands[j];
                 if(cmd.owner && cmd.owner.primitive){
-                    if(cmd.owner.primitive.constructor == Cesium3DTileset|| cmd.owner.primitive.constructor == Model){
+                    if(cmd.owner.primitive.constructor === Cesium3DTileset|| cmd.owner.primitive.constructor === Model){
                         pass.commandList.push(cmd);
                     }
                 }
@@ -3202,6 +3202,7 @@ define([
             }
         }
     }
+
     /**
      * @private
      */

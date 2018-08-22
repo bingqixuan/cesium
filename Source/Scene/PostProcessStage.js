@@ -848,6 +848,7 @@ define([
 
     /**
      * A function that will be called before execute. Used to create WebGL resources and load any textures.
+     * 在执行命令之前被调用的函数。用于创建WebGL资源和加载任何纹理。
      * @param {Context} context The context.
      * @private
      */
@@ -906,7 +907,7 @@ define([
     };
 
     /**
-     * Executes the post-process stage. The color texture is the texture rendered to by the scene or from the previous stage.
+     * 执行后处理阶段。颜色纹理是由场景或前一阶段渲染的纹理。
      * @param {Context} context The context.
      * @param {Texture} colorTexture The input color texture.
      * @param {Texture} depthTexture The input depth texture.
