@@ -2048,7 +2048,7 @@ define([
             'uniform float u_saturation;\n' +
             '#endif \n';
         drawFS = s + drawFS;
-        drawFS = ModelUtility.modifyFragmentShaderForColorCorrection(drawFS);
+        drawFS = ModelUtility.modifyFragmentShaderForPostProcess(drawFS);
 
         createAttributesAndProgram(id, drawFS, drawVS, model, context);
     }
@@ -2107,13 +2107,16 @@ define([
             }
         }
 
-        
+        var defines = [];
+        if(context.uniformState.gltf_ccshow ){
+            defines.push('APPLY_COLORCORRECTION');  // 若开启了模型颜色校正，则添加该定义
+        }
         model._rendererResources.programs[id] = ShaderProgram.fromCache({
             context : context,
             vertexShaderSource : drawVS,
             fragmentShaderSource : drawFS,
             attributeLocations : attributeLocations,
-            defines : context.uniformState.gltf_ccshow ? ['APPLY_COLORCORRECTION'] : []  // 若开启了模型颜色校正，则添加该定义
+            defines : defines
         });
         model.ccshow = context.uniformState.gltf_ccshow; // 保存颜色校正状态
     }
@@ -2975,8 +2978,9 @@ define([
                     return context.uniformState.gltf_saturation ? context.uniformState.gltf_saturation : 1.0;
                 };
 
-                var b = ModelUtility.createUniformFunction(5126, 1.0, {}, defaultTexture);
-                var c = ModelUtility.createUniformFunction(5126, 0.0, {}, defaultTexture);
+                var b = ModelUtility.createUniformFunction(WebGLConstants.FLOAT, 1.0, {}, defaultTexture);
+                var c = ModelUtility.createUniformFunction(WebGLConstants.FLOAT, 0.0, {}, defaultTexture);
+
                 u.values['u_brightness'] = b;
                 u.values['u_contrast'] = b;
                 u.values['u_hue'] = c;
@@ -4575,7 +4579,7 @@ define([
         var cachedRendererResources = model._cachedRendererResources;
         destroyIfNotCached(rendererResources, cachedRendererResources);
 
-        if (isClippingEnabled(model) || isColorShadingEnabled(model) || !frameState.context._us.gltf_ccshow) {
+        if (isClippingEnabled(model) || isColorShadingEnabled(model) || !frameState.context._us.gltf_ccshow ) {
             rendererResources.programs = {};
             rendererResources.silhouettePrograms = {};
 

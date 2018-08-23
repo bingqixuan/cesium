@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>解决Cesium显示画面模糊的问题</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<script id="cesium_sandcastle_script">
+    var viewer;
+    function startup(Cesium) {
+        'use strict';
+//Sandcastle_Begin
+        // 示例来自 https://zhuanlan.zhihu.com/p/41794242
+        viewer = new Cesium.Viewer('cesiumContainer', {
+            infoBox: false,
+            selectionIndicator: false,
+            timeline: false,
+            animation: false,
+            scene3DOnly: true,
+            geocoder: false,
+            homeButton: false,
+            sceneModePicker: false,
+            navigationHelpButton: false,
+            imageryProvider : Cesium.createTileMapServiceImageryProvider({
+                url : Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+            }),
+            baseLayerPicker : false,
+        });
+
+        viewer._cesiumWidget._supportsImageRenderingPixelated = Cesium.FeatureDetection.supportsImageRenderingPixelated();
+        viewer._cesiumWidget._forceResize = true;
+        if (Cesium.FeatureDetection.supportsImageRenderingPixelated()) {
+            var vtxf_dpr = window.devicePixelRatio;
+            // 适度降低分辨率
+            while (vtxf_dpr >= 2.0) {
+                vtxf_dpr /= 2.0;
+            }
+            //alert(dpr);
+            viewer.resolutionScale = vtxf_dpr;
+        }
+
+//Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</body>
+</html>

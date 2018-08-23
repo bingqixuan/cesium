@@ -400,7 +400,7 @@ define([
     };
 
     // 添加后期处理效果
-    ModelUtility.modifyFragmentShaderForColorCorrection = function(shader) {
+    ModelUtility.modifyFragmentShaderForPostProcess = function(shader) {
         shader = ShaderSource.replaceMain(shader, 'czm_total_main');
         shader +=
             '\n' +

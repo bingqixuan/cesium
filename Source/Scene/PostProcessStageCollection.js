@@ -647,8 +647,9 @@ define([
             initialTexture = getOutputTexture(ao);
         }
         if (bloomEnabled && bloom.ready) {
-            // execute(bloom, context, initialTexture, depthTexture, idTexture);
-            // initialTexture = getOutputTexture(bloom);
+            // 执行泛光绘制命令
+            execute(bloom, context, initialTexture, depthTexture, idTexture);
+            initialTexture = getOutputTexture(bloom);
         }
 
         var lastTexture = initialTexture;
