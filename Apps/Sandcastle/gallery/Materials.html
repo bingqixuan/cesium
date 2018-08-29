@@ -214,14 +214,15 @@ function applyCompressedTextureMaterial(primitive, scene) {
         compressedImageUrl = '../images/LogoPVR.ktx';
     }
 
-    primitive.appearance.material = new Cesium.Material({
-        fabric : {
-            type : 'Image',
-            uniforms : {
-                image : compressedImageUrl
-            }
-        }
-    });
+//    primitive.appearance.material = new Cesium.Material({
+//        fabric : {
+//            type : 'Image',
+//            uniforms : {
+//                image : compressedImageUrl
+//            }
+//        }
+//    });
+    primitive.appearance.material = new Cesium.Material.fromType('Water');
 }
 
 function applyNormalMapMaterial(primitive, scene) {

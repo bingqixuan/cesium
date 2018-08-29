@@ -1378,7 +1378,8 @@ define([
                 normalMap : Material.DefaultImageId,
                 frequency : 10.0,
                 animationSpeed : 0.01,
-                amplitude : 1.0,
+                // amplitude : 1.0,
+                amplitude : 3.0,
                 specularIntensity : 0.5,
                 fadeFactor : 1.0
             },

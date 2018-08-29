@@ -2,8 +2,8 @@ define([], function() {
     'use strict';
 
     /**
-     * The state for a particular rendering pass.  This is used to supplement the state
-     * in a command being executed.
+     * The state for a particular rendering pass.  This is used to supplement the state in a command being executed.
+     * 特定渲染通道的状态。这用于补充正在执行的命令中的状态。
      *
      * @private
      */

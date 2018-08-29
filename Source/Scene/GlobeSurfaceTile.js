@@ -389,8 +389,7 @@ define([
                 if (surfaceTile.terrainData !== loaded.data) {
                     surfaceTile.terrainData = loaded.data;
 
-                    // If there's a water mask included in the terrain data, create a
-                    // texture for it.
+                    // 如果地形数据中包含water mask，就为它创建纹理。
                     createWaterMaskTextureIfNeeded(frameState.context, surfaceTile);
 
                     propagateNewLoadedDataToChildren(tile);

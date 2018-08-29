@@ -399,6 +399,22 @@ define([
         return shader;
     };
 
+    ModelUtility.modifyVertexShaderForCartographic = function (shader) {
+        shader = ShaderSource.replaceMain(shader, 'czm_total_main');
+        shader +=
+            '\n' +
+            'void main() \n' +
+            '{ \n' +
+            '    czm_total_main(); \n' +
+            '    #ifdef CARTOGRAPHIC_ENABLED \n' +
+            // '       v_wcPosition = (czm_model * vec4(a_position, 1.0)).xyz; \n' +
+            '       v_wcPosition = (czm_model * vec4(gltf_a_dec_position, 1.0)).xyz; \n' +
+            '    #endif \n' +
+            '} \n';
+
+        return shader;
+    };
+
     // 添加后期处理效果
     ModelUtility.modifyFragmentShaderForPostProcess = function(shader) {
         shader = ShaderSource.replaceMain(shader, 'czm_total_main');
@@ -412,6 +428,21 @@ define([
             '         gl_FragColor.rgb = mix(vec3(0.5), gl_FragColor.rgb, u_contrast); \n' +
             '         gl_FragColor.rgb = czm_hue(gl_FragColor.rgb, u_hue); \n' +
             '         gl_FragColor.rgb = czm_saturation(gl_FragColor.rgb, u_saturation); \n' +
+            '         gl_FragColor.rgb = vec3(gl_FragColor.rg, gl_FragColor.b + 0.5); \n' +
+            '    #endif \n' +
+            '    #ifdef CARTOGRAPHIC_ENABLED \n' +
+            '         vec3 positionCarto = czm_getWgs84EllipsoidCartographic(v_wcPosition); \n' +
+            '         #ifdef v_positionWC \n' +
+            '             positionCarto = czm_getWgs84EllipsoidCartographic(v_positionWC);  \n' +
+            '         #endif \n' +
+            // '         vec3 positionCarto = czm_getWgs84EllipsoidCartographic(v_positionWC); \n' +
+            // '         vec3 positionCarto = czm_getWgs84EllipsoidCartographic(vec3(4984447.500322472,2115772.4366058046,3360961.353386559)); \n' +
+            // '         if(positionCarto.z > -1.0 && positionCarto.z < 1.0){ \n' +
+            '         if(positionCarto.z > u_height){ \n' +
+            '             gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); \n' +
+            '         } else {\n' +
+            '             gl_FragColor.rgb = vec3(0.0, 1.0, 0.0); \n' +
+            '         } \n' +
             '    #endif \n' +
             '} \n';
 

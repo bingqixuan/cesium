@@ -1,0 +1,26 @@
+/**
+ * @private
+ */
+#ifdef CARTOGRAPHIC_ENABLED
+    varying vec4 v_position;
+#endif
+
+
+vec3 czm_getWgs84EllipsoidCartographic(vec3 wc)
+{
+        vec3 radiiSquared = vec3(6378137.0 * 6378137.0, 6378137.0 * 6378137.0, 6356752.3142451793 * 6356752.3142451793);
+        height = defaultValue(height, 0.0);
+
+        var cosLatitude = Math.cos(latitude);
+        scratchN.x = cosLatitude * Math.cos(longitude);
+        scratchN.y = cosLatitude * Math.sin(longitude);
+        scratchN.z = Math.sin(latitude);
+        scratchN = Cartesian3.normalize(scratchN, scratchN);
+
+        Cartesian3.multiplyComponents(radiiSquared, scratchN, scratchK);
+        var gamma = Math.sqrt(Cartesian3.dot(scratchN, scratchK));
+        scratchK = Cartesian3.divideByScalar(scratchK, gamma, scratchK);
+        scratchN = Cartesian3.multiplyByScalar(scratchN, height, scratchN);
+        Cartesian3.add(scratchK, scratchN, result);
+        return vec3(longitude, latitude, height);
+}

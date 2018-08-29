@@ -2306,6 +2306,13 @@ define([
             commands = frustumCommands.commands[Pass.TERRAIN_CLASSIFICATION];
             length = frustumCommands.indices[Pass.TERRAIN_CLASSIFICATION];
             for (j = 0; j < length; ++j) {
+                // 更改水流的法线贴图
+                // if(scene.waterNormalMap && commands[j]._uniformMap.normalMap_3){
+                //     commands[j]._uniformMap.normalMap_3 = function () {
+                //         return scene.waterNormalMap;
+                //     };
+                // }
+
                 executeCommand(commands[j], scene, context, passState);
             }
 
@@ -2440,10 +2447,19 @@ define([
                 depthPlane.execute(context, passState);
             }
 
+
             us.updatePass(Pass.OPAQUE);
             commands = frustumCommands.commands[Pass.OPAQUE];
             length = frustumCommands.indices[Pass.OPAQUE];
+
             for (j = 0; j < length; ++j) {
+                // 更改水流的法线贴图
+                if(scene.waterNormalMap && commands[j]._uniformMap.normalMap_3){
+                    commands[j]._uniformMap.normalMap_3 = function () {
+                        return scene.waterNormalMap;
+                    };
+                }
+
                 executeCommand(commands[j], scene, context, passState);
             }
 

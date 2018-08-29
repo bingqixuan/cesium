@@ -381,7 +381,7 @@ define([
             return;
         }
 
-        // Load/create resources for terrain and imagery. Prepare texture re-projections for the next frame.
+        // 加载/创建地形和图像资源。为下一帧的纹理重投影做准备。
         processTileLoadQueue(this, frameState);
         updateHeights(this, frameState);
         updateTileLoadProgress(this, frameState);
@@ -747,8 +747,8 @@ define([
             return;
         }
 
-        // Remove any tiles that were not used this frame beyond the number
-        // we're allowed to keep.
+        // Remove any tiles that were not used this frame beyond the number we're allowed to keep.
+        // 当瓦片数量超过我们允许保留的瓦片数量，我们将会删除那些没有在这一帧使用的瓦片
         primitive._tileReplacementQueue.trimTiles(primitive.tileCacheSize);
 
         var endTime = getTimestamp() + primitive._loadQueueTimeSlice;

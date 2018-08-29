@@ -1335,8 +1335,8 @@ define([
                 ++numberOfDayTextures;
             }
 
-            // trim texture array to the used length so we don't end up using old textures
-            // which might get destroyed eventually
+            // trim texture array to the used length so we don't end up using old textures which might get destroyed eventually
+            // 把纹理数组削减到使用到的纹理的长度，所以我们不会使用可能最终被销毁旧的纹理
             uniformMapProperties.dayTextures.length = numberOfDayTextures;
             uniformMapProperties.waterMask = waterMaskTexture;
             Cartesian4.clone(surfaceTile.waterMaskTranslationAndScale, uniformMapProperties.waterMaskTranslationAndScale);
