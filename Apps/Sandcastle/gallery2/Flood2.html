@@ -36,7 +36,8 @@
         <tr>
             <td>Height</td>
             <td>
-                <input type="range" min="5" max="5000" step="10" data-bind="value: height, valueUpdate: 'input'">
+                <!--<input type="range" min="5" max="5000" step="10" data-bind="value: height, valueUpdate: 'input'">-->
+                <input type="range" min="-1.0" max="1.0" step="0.02" data-bind="value: height, valueUpdate: 'input'">
                 <input type="text" size="5" data-bind="value: height">
             </td>
         </tr>
@@ -48,32 +49,33 @@
     function startup(Cesium) {
         'use strict';
 //Sandcastle_Begin
+        window.Cesium = Cesium;
         viewer = new Cesium.Viewer('cesiumContainer', {
             // Use Cesium World Terrain
-//            imageryProvider: Cesium.createTileMapServiceImageryProvider({
-//                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
-//            }),
+            imageryProvider: Cesium.createTileMapServiceImageryProvider({
+                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+            }),
             baseLayerPicker: false,
             terrainProvider: Cesium.createWorldTerrain()
         });
+        var tileset = new Cesium.Cesium3DTileset({
+            url: '../../SampleData/Cesium3DTiles/Tilesets/Tileset/tileset.json'
+        });
 
+//        tileset.readyPromise.then(function(tileset) {
+//            viewer.scene.primitives.add(tileset);
+//            viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0.0, -0.5, tileset.boundingSphere.radius * 2.0));
+//        }).otherwise(function(error) {
+//            console.log(error);
+//        });
 
         viewer.scene.globe.depthTestAgainstTerrain = true;
-        var oceanNormalMapResource = new Cesium.Resource({
-            url: Cesium.buildModuleUrl('Assets/Textures/waterNormalsSmall.jpg')
-        });
-        var nm;
-        Cesium.when(oceanNormalMapResource.fetchImage(), function(image) {
-            nm = new Cesium.Texture({
-                context : viewer.scene.frameState.context,
-                source : image
-            });
-            viewer.scene.waterNormalMap = nm;
-
-
+        var tileset = new Cesium.Cesium3DTileset({
+            url: Cesium.IonResource.fromAssetId(5712)
         });
 
-
+        viewer.scene.primitives.add(tileset);
+        viewer.zoomTo(tileset);
 //        Sandcastle.finishedLoading();
 //
 //        return;
@@ -97,7 +99,7 @@
                 point : {
                     pixelSize : 10,
                     color : Cesium.Color.RED,
-                    heightReference : Cesium.HeightReference.CLAMP_TO_GROUND
+                    heightReference : Cesium.HeightReference.NONE
                 }
             });
             positions.push(surfacePosition);
@@ -140,26 +142,31 @@
                 point : {
                     pixelSize : 10,
                     color : Cesium.Color.RED,
-                    heightReference : Cesium.HeightReference.CLAMP_TO_GROUND
+                    heightReference : Cesium.HeightReference.NONE
                 }
             });
             handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
             handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
             positions.push(positions[0]);
 
-            viewer.scene.groundPrimitives.add(new Cesium.GroundPrimitive({
+            viewer.scene.primitives.add(new Cesium.Primitive({
                 geometryInstances : new Cesium.GeometryInstance({
                     geometry : new Cesium.PolygonGeometry({
                         polygonHierarchy : {
                             positions: positions
                         },
-                        vertexFormat : Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT
+//                        vertexFormat : Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT
+                        vertexFormat : Cesium.MaterialAppearance.MaterialSupport.TEXTURED.vertexFormat
                     }),
                 }),
-                classificationType : Cesium.ClassificationType.TERRAIN,
-                appearance : new Cesium.EllipsoidSurfaceAppearance({
-                    aboveGround : false,
-                    material: new Cesium.Material.fromType('Water')
+                classificationType : Cesium.ClassificationType.CESIUM_3D_TILE ,
+//                appearance : new Cesium.EllipsoidSurfaceAppearance({
+//                    aboveGround : false,
+//                    material: new Cesium.Material.fromType('Water')
+//                })
+                appearance : new Cesium.MaterialAppearance({
+                    material : Cesium.Material.fromType('Water'),
+                    faceForward : true
                 })
             }));
 
@@ -186,14 +193,11 @@
 
         Cesium.knockout.getObservable(viewModel, 'height').subscribe(
             function (newValue) {
-                water.polygon.extrudedHeight = newValue;
+//                water.polygon.extrudedHeight = newValue;
+                viewer.scene.context.uniformState['gltf_height'] = newValue;
             }
         );
 
-// Fly to a position with a top-down view
-        viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(-107.0, 39.0, 100000.0)
-        });
 
 
 //Sandcastle_End
