@@ -37,7 +37,7 @@
             <td>Height</td>
             <td>
                 <!--<input type="range" min="5" max="5000" step="10" data-bind="value: height, valueUpdate: 'input'">-->
-                <input type="range" min="1000" max="3000" step="200" data-bind="value: height, valueUpdate: 'input'">
+                <input type="range" min="1000" max="8777" step="500" data-bind="value: height, valueUpdate: 'input'">
                 <input type="text" size="5" data-bind="value: height">
             </td>
         </tr>
@@ -84,13 +84,15 @@
             var values = elevationRamp;
 
             var grd = ctx.createLinearGradient(0, 0, 100, 0);
-            grd.addColorStop(values[0], '#000000'); //black
-            grd.addColorStop(values[1], '#2747E0'); //blue
-            grd.addColorStop(values[2], '#D33B7D'); //pink
-            grd.addColorStop(values[3], '#D33038'); //red
-            grd.addColorStop(values[4], '#FF9742'); //orange
-            grd.addColorStop(values[5], '#ffd700'); //yellow
-            grd.addColorStop(values[6], '#ffffff'); //white
+            grd.addColorStop(values[0], 'rgba(0, 0, 0, 0.4)'); //black
+            grd.addColorStop(values[1], 'rgba(39, 71, 224, 0.4)'); //blue
+            grd.addColorStop(values[2], 'rgba(211, 59, 125, 0.4)'); //pink
+            grd.addColorStop(values[3], 'rgba(211, 48, 56, 0.4)'); //red
+            grd.addColorStop(values[4], 'rgba(255, 151, 66, 0.4)'); //orange
+            grd.addColorStop(values[5], 'rgba(255, 215, 0, 0.4)'); //yellow
+//            grd.addColorStop(values[5], 'rgba(255, 215, 0, 0)'); //yellow
+            grd.addColorStop(values[6], 'rgba(255, 255, 255, 0.4)'); //white
+//            grd.addColorStop(values[6], 'rgba(255, 255, 255, 0)'); //white
 
             ctx.fillStyle = grd;
             ctx.fillRect(0, 0, 100, 1);
@@ -98,14 +100,16 @@
             return ramp;
         }
 
-        var minHeight = 1114.0; // approximate dead sea elevation
-        var maxHeight = 2777.0; // approximate everest elevation
+        var minHeight = -414.0; // approximate dead sea elevation
+        var maxHeight = 8777.0; // approximate everest elevation
+//        var maxHeight = 177.0; // approximate everest elevation
         var globe = viewer.scene.globe;
         var material = Cesium.Material.fromType('ElevationRamp');
         material.uniforms.minHeight = minHeight;
         material.uniforms.maxHeight = maxHeight;
+        material.uniforms.cuHeight = 100;
         material.uniforms.image = getColorRamp();
-//        globe.material = material;
+        globe.material = material;
 
 
 // The viewModel tracks the state of our mini application.
@@ -127,13 +131,20 @@
 
         Cesium.knockout.getObservable(viewModel, 'height').subscribe(
             function (newValue) {
-                material.uniforms.minHeight = newValue;
+                viewer.scene.maximumHeight = newValue;
 //                water.polygon.extrudedHeight = newValue;
 //                viewer.scene.context.uniformState['gltf_height'] = newValue;
             }
         );
+        globe.material.uniforms.visualHeight = 100;
+        setInterval(function () {
+            globe.material.uniforms.visualHeight += 100;
+            if(globe.material.uniforms.visualHeight>8000){
+                globe.material.uniforms.visualHeight = 100;
+            }
+        },100);
         viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(-107.0, 39.0, 100000.0)
+            destination: new Cesium.Cartesian3(377261.6509825479, 5700179.071608303, 2997314.759943666)
         });
 
 
@@ -209,31 +220,33 @@
             handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
             positions.push(positions[0]);
 
-//            viewer.scene.groundPrimitives.add(new Cesium.GroundPrimitive({
-//                geometryInstances : new Cesium.GeometryInstance({
-//                    geometry : new Cesium.PolygonGeometry({
-//                        polygonHierarchy : {
-//                            positions: positions
-//                        },
-//                        vertexFormat : Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT
-//                    }),
-//                }),
-//                classificationType : Cesium.ClassificationType.TERRAIN,
-//                appearance : new Cesium.EllipsoidSurfaceAppearance({
-//                    aboveGround : false,
+            viewer.scene.groundPrimitives.add(new Cesium.GroundPrimitive({
+                geometryInstances : new Cesium.GeometryInstance({
+                    geometry : new Cesium.PolygonGeometry({
+                        polygonHierarchy : {
+                            positions: positions
+                        },
+                        vertexFormat : Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT
+                    }),
+                }),
+                classificationType : Cesium.ClassificationType.TERRAIN,
+                appearance : new Cesium.EllipsoidSurfaceAppearance({
+                    aboveGround : false,
 //                    material: new Cesium.Material.fromType('Water')
-////                    material: material
-//                })
-//            }));
+                    material: material
+                })
+            }));
 
-            viewer.entities.add({
-                name : 'Red polygon on surface',
-                polygon : {
-                    hierarchy : positions,
-                    material : Cesium.Color.RED.withAlpha(0.4),
-                    perPositionHeight: !viewer.scene.globe.depthTestAgainstTerrain
-                }
-            });
+//            viewer.entities.add({
+//                name : 'Red polygon on surface',
+//                polygon : {
+//                    hierarchy : positions,
+//                    material : Cesium.Color.RED.withAlpha(0.4),
+//                    perPositionHeight: !viewer.scene.globe.depthTestAgainstTerrain
+//                }
+//            });
+                    globe.material = material;
+
         };
         handler.setInputAction(rightClickHandler, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
 
