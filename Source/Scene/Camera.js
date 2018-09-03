@@ -1022,9 +1022,12 @@ define([
         if (this._suspendTerrainAdjustment) {
             this._suspendTerrainAdjustment = !globeFinishedUpdating;
         }
-        this._adjustHeightForTerrain();
 
-        // 鐢ㄦ潵璁＄畻_measuringScale銆傚彇涓績鐐瑰尯鍩熶袱鐐瑰儚绱犳墍瀵瑰簲鐨勭瑳鍗″皵鍧愭爣锛岃绠椾袱鐐圭殑璺濈鍗充负_measuringScale
+        if (globeFinishedUpdating) {
+            this._adjustHeightForTerrain();
+        }
+
+        // 用来计算_measuringScale。取中心点区域两点像素所对应的笛卡尔坐标，计算两点的距离即为_measuringScale
         var canvas = this._scene.canvas;
         if (defined(canvas)) {
             scratchCartesian2.x = canvas.clientWidth * 0.5;
