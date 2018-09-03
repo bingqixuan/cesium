@@ -54,10 +54,19 @@
 //                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
 //            }),
             baseLayerPicker: false,
-            terrainProvider: Cesium.createWorldTerrain()
+//            terrainProvider: Cesium.createWorldTerrain()
         });
 
+        var tileset = new Cesium.Cesium3DTileset({
+            url: '../../SampleData/Cesium3DTiles/Tilesets/Tileset/tileset.json'
+        });
 
+        tileset.readyPromise.then(function(tileset) {
+            viewer.scene.primitives.add(tileset);
+            viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0.0, -0.5, tileset.boundingSphere.radius * 2.0));
+        }).otherwise(function(error) {
+            console.log(error);
+        });
         viewer.scene.globe.depthTestAgainstTerrain = true;
         var oceanNormalMapResource = new Cesium.Resource({
             url: Cesium.buildModuleUrl('Assets/Textures/waterNormalsSmall.jpg')
@@ -190,10 +199,6 @@
             }
         );
 
-// Fly to a position with a top-down view
-        viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(-107.0, 39.0, 100000.0)
-        });
 
 
 //Sandcastle_End

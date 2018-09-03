@@ -37,7 +37,7 @@
             <td>Height</td>
             <td>
                 <!--<input type="range" min="5" max="5000" step="10" data-bind="value: height, valueUpdate: 'input'">-->
-                <input type="range" min="-1.0" max="1.0" step="0.02" data-bind="value: height, valueUpdate: 'input'">
+                <input type="range" min="-10.0" max="100.0" step="10" data-bind="value: height, valueUpdate: 'input'">
                 <input type="text" size="5" data-bind="value: height">
             </td>
         </tr>
@@ -194,7 +194,7 @@
         Cesium.knockout.getObservable(viewModel, 'height').subscribe(
             function (newValue) {
 //                water.polygon.extrudedHeight = newValue;
-                viewer.scene.context.uniformState['gltf_height'] = newValue;
+                viewer.scene.frameState.context.uniformState['gltf_height'] = newValue;
             }
         );
 

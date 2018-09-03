@@ -2336,6 +2336,10 @@ define([
                 commands = frustumCommands.commands[Pass.CESIUM_3D_TILE];
                 length = frustumCommands.indices[Pass.CESIUM_3D_TILE];
                 for (j = 0; j < length; ++j) {
+                    if(commands[j]._uniformMap){
+                        // scene.frameState.context.uniformState.gltf_modelMatrix = commands[j]._modelMatrix;
+                        scene.frameState.context.uniformState.gltf_modelMatrix = scene.frameState.context.uniformState.model;
+                    }
                     executeCommand(commands[j], scene, context, passState);
                 }
 

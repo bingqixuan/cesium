@@ -2042,9 +2042,10 @@ define([
             drawFS = 'uniform vec4 czm_pickColor;\n' + drawFS;
         }
         // 增加获取Cartographic
-        var p =  'varying vec3 v_wcPosition; \n';
+        var p =  'varying vec3 v_wcPosition; \n'+
             // '#ifndef czm_model \n' +
-            // '    uniform mat4 czm_model; \n' +
+            'uniform mat4 u_model; \n' +
+            'uniform mat4 u_modelMatrix; \n';
             // '#endif \n';
         drawVS = p + drawVS;
         drawVS = ModelUtility.modifyVertexShaderForCartographic(drawVS);
@@ -2056,6 +2057,7 @@ define([
             'uniform float u_hue;\n' +
             'uniform float u_saturation;\n' +
             '#endif \n' +
+            'uniform mat4 u_model; \n' +
             'uniform float u_height; \n' +
             'varying vec3 v_wcPosition; \n';
         drawFS = s + drawFS;
@@ -2992,15 +2994,20 @@ define([
                 u.uniformMap['u_height'] = function(){
                     return context.uniformState.gltf_height ? context.uniformState.gltf_height : 1.0;
                 };
+                u.uniformMap['u_model'] = function(){
+                    return context.uniformState.gltf_modelMatrix ? context.uniformState.gltf_modelMatrix : Matrix4.IDENTITY;
+                };
 
                 var b = ModelUtility.createUniformFunction(WebGLConstants.FLOAT, 1.0, {}, defaultTexture);
                 var c = ModelUtility.createUniformFunction(WebGLConstants.FLOAT, 0.0, {}, defaultTexture);
+                var a = ModelUtility.createUniformFunction(WebGLConstants.FLOAT_MAT4, Matrix4.IDENTITY, {}, defaultTexture);
 
                 u.values['u_brightness'] = b;
                 u.values['u_contrast'] = b;
                 u.values['u_hue'] = c;
                 u.values['u_saturation'] = b;
                 u.values['u_height'] = b;
+                u.values['u_model'] = a;
             }
         }
     }
