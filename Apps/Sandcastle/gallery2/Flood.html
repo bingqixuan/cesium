@@ -23,27 +23,6 @@
 </style>
 <div id="cesiumContainer" class="fullSize"></div>
 <div id="loadingOverlay"><h1>Loading...</h1></div>
-<div id="toolbar">
-    <table>
-        <tbody>
-        <tr>
-            <td>Alpha</td>
-            <td>
-                <input type="range" min="0.0" max="1.0" step="0.02" data-bind="value: alpha, valueUpdate: 'input'">
-                <input type="text" size="5" data-bind="value: alpha">
-            </td>
-        </tr>
-        <tr>
-            <td>Height</td>
-            <td>
-                <!--<input type="range" min="5" max="5000" step="10" data-bind="value: height, valueUpdate: 'input'">-->
-                <input type="range" min="1000" max="8777" step="500" data-bind="value: height, valueUpdate: 'input'">
-                <input type="text" size="5" data-bind="value: height">
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
 <script id="cesium_sandcastle_script">
     var viewer;
     function startup(Cesium) {
@@ -57,22 +36,7 @@
             })
         });
 
-        viewer.scene.globe.depthTestAgainstTerrain = true;
-        var oceanNormalMapResource = new Cesium.Resource({
-            url: Cesium.buildModuleUrl('Assets/Textures/waterNormalsSmall.jpg')
-        });
-        var nm;
-        Cesium.when(oceanNormalMapResource.fetchImage(), function(image) {
-            nm = new Cesium.Texture({
-                context : viewer.scene.frameState.context,
-                source : image
-            });
-            viewer.scene.waterNormalMap = nm;
-
-
-        });
-
-
+//        viewer.scene.globe.depthTestAgainstTerrain = true;
 
         var elevationRamp = [0.0, 0.045, 0.1, 0.15, 0.37, 0.54, 1.0];
         function getColorRamp() {
@@ -110,32 +74,6 @@
         material.uniforms.cuHeight = 100;
         material.uniforms.image = getColorRamp();
         globe.material = material;
-
-
-// The viewModel tracks the state of our mini application.
-        var viewModel = {
-            alpha: 0.3,
-            height: 3000
-        };
-        Cesium.knockout.track(viewModel);
-
-        var toolbar = document.getElementById('toolbar');
-        Cesium.knockout.applyBindings(viewModel, toolbar);
-
-        Cesium.knockout.getObservable(viewModel, 'alpha').subscribe(
-            function (newValue) {
-                var alpha = parseFloat(newValue);
-                water.polygon.material = Cesium.Color.BLUE.withAlpha(alpha);
-            }
-        );
-
-        Cesium.knockout.getObservable(viewModel, 'height').subscribe(
-            function (newValue) {
-                viewer.scene.maximumHeight = newValue;
-//                water.polygon.extrudedHeight = newValue;
-//                viewer.scene.context.uniformState['gltf_height'] = newValue;
-            }
-        );
         globe.material.uniforms.visualHeight = 100;
         setInterval(function () {
             globe.material.uniforms.visualHeight += 100;
@@ -146,111 +84,6 @@
         viewer.camera.flyTo({
             destination: new Cesium.Cartesian3(377261.6509825479, 5700179.071608303, 2997314.759943666)
         });
-
-
-
-
-
-
-        var handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
-        let positions = [];
-        let layer = new Cesium.CustomDataSource;
-        viewer.dataSources.add(layer);
-        let mouseMoveHandler;
-        let pointer = false;
-
-        let leftClickHandler = (click) => {
-            positions.pop();
-            let surfacePosition = viewer.scene.pickPosition(click.position);
-            layer.entities.add({
-                name: 'drawing',
-                position : new Cesium.CallbackProperty(function() {
-                    return surfacePosition;
-                }, true),
-                point : {
-                    pixelSize : 10,
-                    color : Cesium.Color.RED,
-                    heightReference : Cesium.HeightReference.CLAMP_TO_GROUND
-                }
-            });
-            positions.push(surfacePosition);
-            pointer = false;
-
-            if (!mouseMoveHandler) {
-                mouseMoveHandler = (click) => {
-                    if (positions.length > 0) {
-                        if (pointer) {
-                            positions.pop();
-                            let surfacePosition = viewer.scene.pickPosition(click.endPosition);
-                            positions.push(surfacePosition);
-                        } else {
-                            let surfacePosition = viewer.scene.pickPosition(click.endPosition);
-                            positions.push(surfacePosition);
-                            pointer = true;
-                        }
-
-                    }
-                };
-                handler.setInputAction(mouseMoveHandler, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-            }
-
-        };
-        handler.setInputAction(leftClickHandler, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-        let rightClickHandler = (click) => {
-
-            pointer = false;
-            handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-            positions.pop();
-            // let surfacePosition = this._viewer.scene.camera.pickEllipsoid(click.position);
-            let surfacePosition = viewer.scene.pickPosition(click.position);
-            positions.push(surfacePosition);
-            layer.entities.add({
-                name: 'drawing',
-                position : new Cesium.CallbackProperty(function() {
-                    return surfacePosition;
-                }, true),
-                point : {
-                    pixelSize : 10,
-                    color : Cesium.Color.RED,
-                    heightReference : Cesium.HeightReference.CLAMP_TO_GROUND
-                }
-            });
-            handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
-            handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-            positions.push(positions[0]);
-
-            viewer.scene.groundPrimitives.add(new Cesium.GroundPrimitive({
-                geometryInstances : new Cesium.GeometryInstance({
-                    geometry : new Cesium.PolygonGeometry({
-                        polygonHierarchy : {
-                            positions: positions
-                        },
-                        vertexFormat : Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT
-                    }),
-                }),
-                classificationType : Cesium.ClassificationType.TERRAIN,
-                appearance : new Cesium.EllipsoidSurfaceAppearance({
-                    aboveGround : false,
-//                    material: new Cesium.Material.fromType('Water')
-                    material: material
-                })
-            }));
-
-//            viewer.entities.add({
-//                name : 'Red polygon on surface',
-//                polygon : {
-//                    hierarchy : positions,
-//                    material : Cesium.Color.RED.withAlpha(0.4),
-//                    perPositionHeight: !viewer.scene.globe.depthTestAgainstTerrain
-//                }
-//            });
-                    globe.material = material;
-
-        };
-        handler.setInputAction(rightClickHandler, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-
-
 //Sandcastle_End
         Sandcastle.finishedLoading();
     }
