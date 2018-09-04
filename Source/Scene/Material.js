@@ -1548,7 +1548,8 @@ define([
             uniforms : {
                 image: Material.DefaultImageId,
                 minimumHeight: 0.0,
-                maximumHeight: 10000.0
+                maximumHeight: 10000.0,
+                visualHeight: 100.0
             },
             source : ElevationRampMaterial
         },

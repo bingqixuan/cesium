@@ -23,88 +23,67 @@
 </style>
 <div id="cesiumContainer" class="fullSize"></div>
 <div id="loadingOverlay"><h1>Loading...</h1></div>
-<div id="toolbar">
-    <table>
-        <tbody><tr>
-            <td>Alpha</td>
-            <td>
-                <input type="range" min="0.0" max="1.0" step="0.02" data-bind="value: alpha, valueUpdate: 'input'">
-                <input type="text" size="5" data-bind="value: alpha">
-            </td>
-        </tr>
-        <tr>
-            <td>Height</td>
-            <td>
-                <input type="range" min="500" max="5000" step="1" data-bind="value: height, valueUpdate: 'input'">
-                <input type="text" size="5" data-bind="value: height">
-            </td>
-        </tr>
-        </tbody></table>
-</div>
 <script id="cesium_sandcastle_script">
+    var viewer;
     function startup(Cesium) {
         'use strict';
 //Sandcastle_Begin
-        var viewer = new Cesium.Viewer('cesiumContainer', {
+        window.Cesium = Cesium;
+        viewer = new Cesium.Viewer('cesiumContainer', {
             // Use Cesium World Terrain
-            imageryProvider : Cesium.createTileMapServiceImageryProvider({
-                url : Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
-            }),
-            baseLayerPicker : false,
-            terrainProvider : Cesium.createWorldTerrain()
+            terrainProvider: Cesium.createWorldTerrain({
+                requestVertexNormals: true //Needed to visualize slope
+            })
         });
 
-// Closeby details are clipped too soon when this is enabled
-        viewer.scene.logarithmicDepthBuffer = false;
+//        viewer.scene.globe.depthTestAgainstTerrain = true;
 
-// The corners of Colorado
-        var co = [-109.0, 37.0, 0,
-            -102.0, 37.0, 0,
-            -102.0, 41.0, 0,
-            -109.0, 41.0, 0];
+        var elevationRamp = [0.0, 0.045, 0.1, 0.15, 0.37, 0.54, 1.0];
+        function getColorRamp() {
+            var ramp = document.createElement('canvas');
+            ramp.width = 100;
+            ramp.height = 1;
+            var ctx = ramp.getContext('2d');
 
-// The "water" is just a blue rectangular extruded polygon!
-        var water = viewer.entities.add({
-            name : 'Blue extruded polygon over Colorado',
-            polygon : {
-                hierarchy : Cesium.Cartesian3.fromDegreesArrayHeights(co),
-                extrudedHeight: 3000,
-                // vertexFormat allows it to warp around the globe 该属性可以使其贴在球上
-                vertexFormat : Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT,
-                material : Cesium.Color.BLUE.withAlpha(0.3)
+            var values = elevationRamp;
+
+            var grd = ctx.createLinearGradient(0, 0, 100, 0);
+            grd.addColorStop(values[0], 'rgba(0, 0, 0, 0.4)'); //black
+            grd.addColorStop(values[1], 'rgba(39, 71, 224, 0.4)'); //blue
+            grd.addColorStop(values[2], 'rgba(211, 59, 125, 0.4)'); //pink
+            grd.addColorStop(values[3], 'rgba(211, 48, 56, 0.4)'); //red
+            grd.addColorStop(values[4], 'rgba(255, 151, 66, 0.4)'); //orange
+            grd.addColorStop(values[5], 'rgba(255, 215, 0, 0.4)'); //yellow
+//            grd.addColorStop(values[5], 'rgba(255, 215, 0, 0)'); //yellow
+            grd.addColorStop(values[6], 'rgba(255, 255, 255, 0.4)'); //white
+//            grd.addColorStop(values[6], 'rgba(255, 255, 255, 0)'); //white
+
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, 100, 1);
+
+            return ramp;
+        }
+
+        var minHeight = -414.0; // approximate dead sea elevation
+        var maxHeight = 8777.0; // approximate everest elevation
+//        var maxHeight = 177.0; // approximate everest elevation
+        var globe = viewer.scene.globe;
+        var material = Cesium.Material.fromType('ElevationRamp');
+        material.uniforms.minHeight = minHeight;
+        material.uniforms.maxHeight = maxHeight;
+        material.uniforms.cuHeight = 100;
+        material.uniforms.image = getColorRamp();
+        globe.material = material;
+        globe.material.uniforms.visualHeight = 100;
+        setInterval(function () {
+            globe.material.uniforms.visualHeight += 100;
+            if(globe.material.uniforms.visualHeight>8000){
+                globe.material.uniforms.visualHeight = 100;
             }
-        });
-
-// The viewModel tracks the state of our mini application.
-        var viewModel = {
-            alpha: 0.3,
-            height: 3000
-        };
-        Cesium.knockout.track(viewModel);
-
-        var toolbar = document.getElementById('toolbar');
-        Cesium.knockout.applyBindings(viewModel, toolbar);
-
-        Cesium.knockout.getObservable(viewModel, 'alpha').subscribe(
-            function(newValue) {
-                var alpha = parseFloat(newValue);
-                water.polygon.material = Cesium.Color.BLUE.withAlpha(alpha);
-            }
-        );
-
-        Cesium.knockout.getObservable(viewModel, 'height').subscribe(
-            function(newValue) {
-                water.polygon.extrudedHeight = newValue;
-            }
-        );
-
-// Fly to a position with a top-down view
+        },100);
         viewer.camera.flyTo({
-            destination : Cesium.Cartesian3.fromDegrees(-107.0, 39.0, 100000.0)
+            destination: new Cesium.Cartesian3(377261.6509825479, 5700179.071608303, 2997314.759943666)
         });
-
-
-
 //Sandcastle_End
         Sandcastle.finishedLoading();
     }
