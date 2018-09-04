@@ -81,7 +81,7 @@ vec3 czm_scaleToGeodeticSurface(vec3 cartesian, vec3 oneOverRadii, vec3 oneOverR
     correction = func / derivative;
 
 //    for(float i = 0.0; abs(func) > 0.000000000001; i=i+1.0){
-    for(int i = 0; i<10000; i++){
+    for(int i = 0; i<100; i++){
          lambda =lambda - correction;
 
          xMultiplier = 1.0 / (1.0 + lambda * oneOverRadiiSquaredX);
@@ -106,7 +106,7 @@ vec3 czm_scaleToGeodeticSurface(vec3 cartesian, vec3 oneOverRadii, vec3 oneOverR
 
          correction = func / derivative;
 
-         if(abs(func) < 0.000000000001){
+         if(abs(func) < 0.000001){
             break;
          }
     }

@@ -2042,11 +2042,9 @@ define([
             drawFS = 'uniform vec4 czm_pickColor;\n' + drawFS;
         }
         // 增加获取Cartographic
-        var p =  'varying vec3 v_wcPosition; \n'+
-            // '#ifndef czm_model \n' +
-            'uniform mat4 u_model; \n' +
-            'uniform mat4 u_modelMatrix; \n';
-            // '#endif \n';
+        var p =
+            'varying vec3 v_wcPosition; \n'+
+            'uniform float u_height; \n';
         drawVS = p + drawVS;
         drawVS = ModelUtility.modifyVertexShaderForCartographic(drawVS);
 
@@ -2057,7 +2055,6 @@ define([
             'uniform float u_hue;\n' +
             'uniform float u_saturation;\n' +
             '#endif \n' +
-            'uniform mat4 u_model; \n' +
             'uniform float u_height; \n' +
             'varying vec3 v_wcPosition; \n';
         drawFS = s + drawFS;
@@ -2124,7 +2121,9 @@ define([
         if(context.uniformState.gltf_ccshow ){
             defines.push('APPLY_COLORCORRECTION');  // 若开启了模型颜色校正，则添加该定义
         }
-        defines.push('CARTOGRAPHIC_ENABLED');
+        if(context.uniformState.gltf_enableCarto){
+            defines.push('CARTOGRAPHIC_ENABLED');
+        }
         model._rendererResources.programs[id] = ShaderProgram.fromCache({
             context : context,
             vertexShaderSource : drawVS,

@@ -406,10 +406,7 @@ define([
             'void main() \n' +
             '{ \n' +
             '    czm_total_main(); \n' +
-            '    #ifdef CARTOGRAPHIC_ENABLED \n' +
-            // '       v_wcPosition = (u_model * vec4(a_position, 1.0)).xyz; \n' +
-            '       v_wcPosition = (u_model * vec4(gltf_a_dec_position, 1.0)).xyz; \n' +
-            '    #endif \n' +
+            '    v_wcPosition = (czm_inverseViewProjection * gl_Position).xyz; \n' +
             '} \n';
 
         return shader;
@@ -432,18 +429,9 @@ define([
             '    #endif \n' +
             '    #ifdef CARTOGRAPHIC_ENABLED \n' +
             '         vec3 positionCarto = czm_getWgs84EllipsoidCartographic(v_wcPosition); \n' +
-            '         #ifdef v_positionWC \n' +
-            '             positionCarto = czm_getWgs84EllipsoidCartographic(v_positionWC);  \n' +
-            '         #endif \n' +
-            // '         vec3 positionCarto = czm_getWgs84EllipsoidCartographic(v_positionWC); \n' +
-            '         positionCarto = czm_getWgs84EllipsoidCartographic(vec3(1216567.8848419313,-4736311.852049002,4081260.6865355335)); \n' +
-            // '         if(positionCarto.z > -1.0 && positionCarto.z < 1.0){ \n' +
-            '         if(positionCarto.z > u_height){ \n' +
-            // '         if(positionCarto.x < 0.0){ \n' +
-            '             gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); \n' +
-            '         } else {\n' +
-            '             gl_FragColor.rgb = vec3(0.0, 1.0, 0.0); \n' +
-            '         } \n' +
+            '         if(positionCarto.z - u_height < -0.1){ \n' +
+            '             gl_FragColor.b = mix(1.0, gl_FragColor.b, 0.2); \n' +
+            '         }\n '+
             '    #endif \n' +
             '} \n';
 
