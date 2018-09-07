@@ -29,28 +29,27 @@
         'use strict';
 //Sandcastle_Begin
         viewer = new Cesium.Viewer('cesiumContainer', {
-            infoBox: false,
-            selectionIndicator: false,
-            timeline: false,
-            animation: false,
-            scene3DOnly: true,
-            geocoder: false,
-            homeButton: false,
-            sceneModePicker: false,
-            navigationHelpButton: false,
-            imageryProvider : Cesium.createTileMapServiceImageryProvider({
-                url : Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+            imageryProvider: Cesium.createTileMapServiceImageryProvider({
+                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
             }),
-            baseLayerPicker : false,
+            baseLayerPicker: false
         });
         viewer.camera.setView({
-            destination: new Cesium.Cartesian3.fromDegrees(116, 39, 1e5)
+            destination: new Cesium.Cartesian3.fromDegrees(-95.0, 43.0, 1e6)
         });
-        var es = new Cesium.EffectScatter({
-            scene: viewer.scene,
-            position: new Cesium.Cartesian3.fromDegrees(116, 39, 0)
+
+        var scene = viewer.scene;
+
+        new Cesium.ScatterEffect({
+            scene: scene,
+            positions: [
+                new Cesium.Cartesian3.fromDegrees(-95.0, 43.0),
+                new Cesium.Cartesian3.fromDegrees(-95.0, 40.0),
+                new Cesium.Cartesian3.fromDegrees(-90.0, 40.0)
+            ],
+            radius: 1000000
         });
-//Sandcastle_End
+        //Sandcastle_End
         Sandcastle.finishedLoading();
     }
     if (typeof Cesium !== "undefined") {

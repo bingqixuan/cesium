@@ -1874,6 +1874,10 @@ define([
      * @exception {RuntimeError} Vertex texture fetch support is required to render primitives with per-instance attributes. The maximum number of vertex texture image units must be greater than zero.
      */
     Primitive.prototype.update = function(frameState) {
+        // 若有外部需要更新的函数，则放到这里执行
+        if(this._insertFuncInUpdate){
+            this._insertFuncInUpdate();
+        }
         if (((!defined(this.geometryInstances)) && (this._va.length === 0)) ||
             (defined(this.geometryInstances) && isArray(this.geometryInstances) && this.geometryInstances.length === 0) ||
             (!defined(this.appearance)) ||

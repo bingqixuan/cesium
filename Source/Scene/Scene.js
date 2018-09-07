@@ -295,8 +295,8 @@ define([
         this._primitives = new PrimitiveCollection();
         this._groundPrimitives = new PrimitiveCollection();
 
-        // this._logDepthBuffer = context.fragmentDepth;
-        this._logDepthBuffer = undefined;
+        this._logDepthBuffer = context.fragmentDepth;
+        // this._logDepthBuffer = undefined;
         this._logDepthBufferDirty = true;
         this._updateFrustums = false;
 

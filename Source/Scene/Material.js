@@ -21,6 +21,7 @@ define([
         '../Shaders/Materials/BumpMapMaterial',
         '../Shaders/Materials/CheckerboardMaterial',
         '../Shaders/Materials/DotMaterial',
+        '../Shaders/Materials/ScatterEffectMaterial',
         '../Shaders/Materials/ElevationContourMaterial',
         '../Shaders/Materials/ElevationRampMaterial',
         '../Shaders/Materials/FadeMaterial',
@@ -58,6 +59,7 @@ define([
         BumpMapMaterial,
         CheckerboardMaterial,
         DotMaterial,
+        ScatterEffectMaterial,
         ElevationContourMaterial,
         ElevationRampMaterial,
         FadeMaterial,
@@ -1437,6 +1439,26 @@ define([
         translucent : function(material) {
             var uniforms = material.uniforms;
             return (uniforms.fadeInColor.alpha < 1.0) || (uniforms.fadeOutColor.alpha < 1.0);
+        }
+    });
+
+    /**
+     * ScatterEffect特效
+     * @type {string}
+     */
+    Material.ScatterEffectType = 'ScatterEffect';
+    Material._materialCache.addMaterial(Material.ScatterEffectType, {
+        fabric : {
+            type : Material.ScatterEffectType,
+            uniforms : {
+                color : new Color(1.0, 0.0, 0.0, 0.7),
+                time : 0.1
+            },
+            source : ScatterEffectMaterial
+        },
+        translucent : function(material) {
+            var uniforms = material.uniforms;
+            return uniforms.color.alpha < 1.0;
         }
     });
 
