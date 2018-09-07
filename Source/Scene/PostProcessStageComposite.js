@@ -296,6 +296,7 @@ define([
      * A function that will be called before execute. Updates each post-process stage in the composite.
      * 在执行之前被调用的函数。更新组合中的每个后处理阶段。
      * @param {Context} context The context.
+     * @param {Boolean} useLogDepth Whether the scene uses a logarithmic depth buffer.
      * @private
      */
     PostProcessStageComposite.prototype.update = function(context, useLogDepth) {
