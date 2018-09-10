@@ -45,16 +45,16 @@
             baseLayerPicker : false,
         });
         let boundingBox = {
-            north: 43,
-            south: 3,
+            north: 71,
+            south: 1,
             east: 120,
-            west: 90
+            west: 40
         };
 
         let points = [];
-        for (let i=0;i<1000;i++){
-            let x = 90 + Math.random()*30;
-            let y = 3 + Math.random()*43;
+        for (let i=0;i<100;i++){
+            let x = 40 + Math.random()*80;
+            let y = 1 + Math.random()*70;
             let value = Math.random()*100;
             viewer.entities.add({
                 position: Cesium.Cartesian3.fromDegrees(x, y),
