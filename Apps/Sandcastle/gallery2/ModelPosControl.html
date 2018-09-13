@@ -84,7 +84,7 @@
         handler.setInputAction(function(movement) {
             pri = scene.pick(movement.position);
             if(pri && pri.primitive._id.split('_').includes('control')){
-                recoverColor(pri.primitive._id);
+                changeColor(pri.primitive._id);
                 axisID = pri.primitive._id;
 //                mousePosition = startMousePosition = Cesium.Cartesian3.clone(movement.position);
                 currentPosition = lastPosition = Cesium.Cartesian3.clone(scene.pickPosition(movement.position));
@@ -112,25 +112,30 @@
             }
         }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-        function recoverColor(id) {
+        function changeColor(id) {
+            recoverColor();
             if(id === 'control_x'){
                 p._primitive._primitives["0"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
-                p._primitive._primitives["1"].appearance.material.uniforms.color = Cesium.Color.GREEN;
-                p._primitive._primitives["2"].appearance.material.uniforms.color = Cesium.Color.BLUE;
             }else if(id === 'control_y'){
-                p._primitive._primitives["0"].appearance.material.uniforms.color = Cesium.Color.RED;
                 p._primitive._primitives["1"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
-                p._primitive._primitives["2"].appearance.material.uniforms.color = Cesium.Color.BLUE;
             }else if(id === 'control_z'){
-                p._primitive._primitives["0"].appearance.material.uniforms.color = Cesium.Color.RED;
-                p._primitive._primitives["1"].appearance.material.uniforms.color = Cesium.Color.GREEN;
                 p._primitive._primitives["2"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
-            }else{
-                p._primitive._primitives["0"].appearance.material.uniforms.color = Cesium.Color.RED;
-                p._primitive._primitives["1"].appearance.material.uniforms.color = Cesium.Color.GREEN;
-                p._primitive._primitives["2"].appearance.material.uniforms.color = Cesium.Color.BLUE;
+            }else if(id === 'control_xy'){
+                p._primitive._primitives["3"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
+            }else if(id === 'control_xz'){
+                p._primitive._primitives["4"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
+            }else if(id === 'control_yz'){
+                p._primitive._primitives["5"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
             }
+        }
 
+        function recoverColor() {
+            p._primitive._primitives["0"].appearance.material.uniforms.color = Cesium.Color.RED;
+            p._primitive._primitives["1"].appearance.material.uniforms.color = Cesium.Color.GREEN;
+            p._primitive._primitives["2"].appearance.material.uniforms.color = Cesium.Color.BLUE;
+            p._primitive._primitives["3"].appearance.material.uniforms.color = Cesium.Color.BLUE;
+            p._primitive._primitives["4"].appearance.material.uniforms.color = Cesium.Color.GREEN;
+            p._primitive._primitives["5"].appearance.material.uniforms.color = Cesium.Color.RED;
         }
 
         viewer.clock.onTick.addEventListener(function() {
@@ -165,15 +170,52 @@
                         if (hpRoll.pitch < -Cesium.Math.TWO_PI) {
                             hpRoll.pitch += Cesium.Math.TWO_PI;
                         }
-                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
+//                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
+//                        var matrix = new Cesium.Matrix3()
+                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByMatrix3(planePrimitive.modelMatrix, Cesium.Matrix3.fromRotationY(deltaRadians, new Cesium.Matrix3()), new Cesium.Matrix4());
                     }else if(deltaX < 0 && deltaZ > 0 ){
                         hpRoll.pitch += deltaRadians;
                         if (hpRoll.pitch > Cesium.Math.TWO_PI) {
                             hpRoll.pitch -= Cesium.Math.TWO_PI;
                         }
+//                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
+//                        var matrix =  Cesium.Matrix4.fromRotationTranslation(Cesium.Matrix3.fromRotationY(-deltaRadians, new Cesium.Matrix3()));
+                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByMatrix3(planePrimitive.modelMatrix, Cesium.Matrix3.fromRotationY(-deltaRadians, new Cesium.Matrix3()), new Cesium.Matrix4());
+                    }
+                }else if(axisID === 'control_xy'){
+                    var deltaX = currentPosition.x - lastPosition.x;
+                    var deltaY = currentPosition.y - lastPosition.y;
+//                    if(deltaX)
+                    if(deltaX > 0 && deltaY < 0 ){
+                        hpRoll.heading += deltaRadians;
+                        if (hpRoll.heading > Cesium.Math.TWO_PI) {
+                            hpRoll.heading -= Cesium.Math.TWO_PI;
+                        }
+                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
+                    }else if(deltaX < 0 && deltaY > 0 ){
+                        hpRoll.heading -= deltaRadians;
+                        if (hpRoll.heading < 0.0) {
+                            hpRoll.heading += Cesium.Math.TWO_PI;
+                        }
                         Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
                     }
-
+                }else if(axisID === 'control_yz'){
+                    var deltaY = currentPosition.y - lastPosition.y;
+                    var deltaZ = currentPosition.z - lastPosition.z;
+//                    if(deltaX)
+                    if(deltaY > 0 && deltaZ < 0 ){
+                        hpRoll.roll += deltaRadians;
+                        if (hpRoll.roll > Cesium.Math.TWO_PI) {
+                            hpRoll.roll -= Cesium.Math.TWO_PI;
+                        }
+                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
+                    }else if(deltaY < 0 && deltaZ > 0 ){
+                        hpRoll.roll -= deltaRadians;
+                        if (hpRoll.roll < 0.0) {
+                            hpRoll.roll += Cesium.Math.TWO_PI;
+                        }
+                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
+                    }
                 }
                 lastPosition = Cesium.Cartesian3.clone(currentPosition);
             }

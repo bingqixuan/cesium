@@ -211,9 +211,6 @@ define([
                 }),
                 modelMatrix : Matrix4.multiplyByUniformScale(this.modelMatrix, this.length, new Matrix4()),
                 id : this.id + 'xy',
-                attributes : {
-                    color : ColorGeometryInstanceAttribute.fromColor(Color.BLUE)
-                }
             });
 
             var xz = new GeometryInstance({
@@ -225,9 +222,6 @@ define([
                 }),
                 modelMatrix : Matrix4.multiplyByUniformScale(this.modelMatrix, this.length, new Matrix4()),
                 id : this.id + 'xz',
-                attributes : {
-                    color : ColorGeometryInstanceAttribute.fromColor(Color.GREEN)
-                }
             });
 
             var yz = new GeometryInstance({
@@ -238,10 +232,7 @@ define([
                     followSurface: false
                 }),
                 modelMatrix : Matrix4.multiplyByUniformScale(this.modelMatrix, this.length, new Matrix4()),
-                id : this.id + 'yz',
-                attributes : {
-                    color : ColorGeometryInstanceAttribute.fromColor(Color.RED)
-                }
+                id : this.id + 'yz'
             });
 
             this._primitive = new PrimitiveCollection();
@@ -266,19 +257,46 @@ define([
             }
             var xypri = new Primitive({
                 geometryInstances : xy,
-                appearance : new PolylineColorAppearance(),
+                appearance : new PolylineMaterialAppearance({
+                    material : new Material({
+                        fabric: {
+                            type: 'Color',
+                            uniforms: {
+                                color: Color.BLUE
+                            }
+                        }
+                    })
+                }),
                 asynchronous : false
             });
             xypri._id = xy.id;
             var xzpri = new Primitive({
                 geometryInstances : xz,
-                appearance : new PolylineColorAppearance(),
+                appearance : new PolylineMaterialAppearance({
+                    material : new Material({
+                        fabric: {
+                            type: 'Color',
+                            uniforms: {
+                                color: Color.GREEN
+                            }
+                        }
+                    })
+                }),
                 asynchronous : false
             });
             xzpri._id = xz.id;
             var yzpri = new Primitive({
                 geometryInstances : yz,
-                appearance : new PolylineColorAppearance(),
+                appearance : new PolylineMaterialAppearance({
+                    material : new Material({
+                        fabric: {
+                            type: 'Color',
+                            uniforms: {
+                                color: Color.RED
+                            }
+                        }
+                    })
+                }),
                 asynchronous : false
             });
             yzpri._id = yz.id;
