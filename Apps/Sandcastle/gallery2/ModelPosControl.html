@@ -37,11 +37,8 @@
             imageryProvider: Cesium.createTileMapServiceImageryProvider({
                 url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
             }),
-            baseLayerPicker: false,
+            baseLayerPicker: false
         });
-
-
-
 
 //        viewer.extend(Cesium.viewerCesiumInspectorMixin);
         var obj = {
@@ -62,11 +59,25 @@
         var position = obj.pos;
         var converter = obj.converter;
         var comments = obj.comments;
+        var originMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter)
         var planePrimitive = scene.primitives.add(Cesium.Model.fromGltf({
             url: '../../SampleData/models/CesiumAir/Cesium_Air.glb',
-            modelMatrix: Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter),
+            modelMatrix: Cesium.Matrix4.clone(originMatrix),
             minimumPixelSize: 128
         }));
+
+        planePrimitive.readyPromise.then(function(model) {
+            var camera = viewer.camera;
+
+            // Zoom to model
+            var r = 2.0 * Math.max(model.boundingSphere.radius, camera.frustum.near);
+            controller.minimumZoomDistance = r * 0.5;
+
+            var center = Cesium.Matrix4.multiplyByPoint(model.modelMatrix, model.boundingSphere.center, new Cesium.Cartesian3());
+            var heading = Cesium.Math.toRadians(230.0);
+            var pitch = Cesium.Math.toRadians(-20.0);
+            camera.lookAt(center, new Cesium.HeadingPitchRange(heading, pitch, r * 2.0));
+        });
 
         var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(position, hprRollZero, Cesium.Ellipsoid.WGS84, converter);
 //        p = scene.primitives.add(new Cesium.DebugModelMatrixPrimitive({
@@ -172,7 +183,30 @@
                         }
 //                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
 //                        var matrix = new Cesium.Matrix3()
-                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByMatrix3(planePrimitive.modelMatrix, Cesium.Matrix3.fromRotationY(deltaRadians, new Cesium.Matrix3()), new Cesium.Matrix4());
+//                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByMatrix3(planePrimitive.modelMatrix, Cesium.Matrix3.fromRotationY(deltaRadians, new Cesium.Matrix3()), new Cesium.Matrix4());
+
+                        var rotateMatrix3 = new Cesium.Matrix3();
+
+                        var quaternion = Cesium.Quaternion.fromAxisAngle(new Cesium.Cartesian3(0, 2, 0), deltaRadians);
+                        Cesium.Matrix3.fromQuaternion(quaternion, rotateMatrix3);
+//                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByMatrix3(planePrimitive.modelMatrix, rotateMatrix3, new Cesium.Matrix4());
+
+                        var mat = Cesium.Matrix4.inverse(originMatrix, new Cesium.Matrix4());
+                        var neg_center = Cesium.Matrix4.multiplyByPoint(mat, new Cesium.Cartesian3(0, 57, 0), new Cesium.Cartesian3());
+
+                        var center = Cesium.Cartesian3.negate(neg_center, new Cesium.Cartesian3());
+                        var transformMatrix = Cesium.Matrix4.fromTranslation(center, new Cesium.Matrix4());
+                        var transformMatrix1 = Cesium.Matrix4.fromTranslation(neg_center, new Cesium.Matrix4());
+
+                        var zeroTranslation = new Cesium.Cartesian3(0, 0, 0);
+                        var newValue = Cesium.Matrix4.fromRotationTranslation(rotateMatrix3, zeroTranslation);
+                        newValue = Cesium.Matrix4.multiply(newValue, transformMatrix, newValue);
+
+                        planePrimitive.modelMatrix = Cesium.Matrix4.multiply(originMatrix, transformMatrix1, new Cesium.Matrix4());
+                        planePrimitive.modelMatrix = Cesium.Matrix4.multiply(planePrimitive.modelMatrix, newValue, newValue);
+
+
+
                     }else if(deltaX < 0 && deltaZ > 0 ){
                         hpRoll.pitch += deltaRadians;
                         if (hpRoll.pitch > Cesium.Math.TWO_PI) {

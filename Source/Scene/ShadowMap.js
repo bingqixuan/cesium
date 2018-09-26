@@ -1135,11 +1135,11 @@ define([
         var shadowMapCamera = shadowMap._shadowMapCamera;
         var sceneCamera = shadowMap._sceneCamera;
 
-        // 1. First find a tight bounding box in light space that contains the entire camera frustum.
+        // 1. 首先在light空间中找到一个包含整个相机截锥体的紧密包围盒。
         var viewProjection = Matrix4.multiply(sceneCamera.frustum.projectionMatrix, sceneCamera.viewMatrix, scratchMatrix);
         var inverseViewProjection = Matrix4.inverse(viewProjection, scratchMatrix);
 
-        // Start to construct the light view matrix. Set translation later once the bounding box is found.
+        // 开始构造light的视图矩阵。一旦找到边界框，就设置转换。
         var lightDir = shadowMapCamera.directionWC;
         var lightUp = sceneCamera.directionWC; // Align shadows to the camera view.
         var lightRight = Cartesian3.cross(lightDir, lightUp, scratchRight);
@@ -1152,6 +1152,7 @@ define([
         var cameraToLight = Matrix4.multiply(lightView, inverseViewProjection, scratchMatrix);
 
         // Project each corner from NDC space to light view space, and calculate a min and max in light view space
+        // 将每个角从NDC空间投影到light的视图空间，并计算light的视图空间的最小值和最大值
         var min = Cartesian3.fromElements(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE, scratchMin);
         var max = Cartesian3.fromElements(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, scratchMax);
 
@@ -1164,10 +1165,12 @@ define([
         }
 
         // 2. Set bounding box back to include objects in the light's view
-        max.z += 1000.0; // Note: in light space, a positive number is behind the camera
-        min.z -= 10.0; // Extend the shadow volume forward slightly to avoid problems right at the edge
+        // 2. 设置一个可以包含light视图中的对象的包围盒
+        max.z += 1000.0; // Note: 在light空间中，正数位于相机后方 in light space, a positive number is behind the camera
+        min.z -= 10.0; // 稍微向前伸展阴影体以避免在边缘处出现问题 Extend the shadow volume forward slightly to avoid problems right at the edge
 
         // 3. Adjust light view matrix so that it is centered on the bounding volume
+        // 3. 调整light的视图矩阵，使其位于包围体的中心
         var translation = scratchTranslation;
         translation.x = -(0.5 * (min.x + max.x));
         translation.y = -(0.5 * (min.y + max.y));
@@ -1177,6 +1180,7 @@ define([
         lightView = Matrix4.multiply(translationMatrix, lightView, lightView);
 
         // 4. Create an orthographic frustum that covers the bounding box extents
+        // 4. 创建一个覆盖包围盒范围的正交视锥体
         var halfWidth = 0.5 * (max.x - min.x);
         var halfHeight = 0.5 * (max.y - min.y);
         var depth = max.z - min.z;
@@ -1189,7 +1193,7 @@ define([
         frustum.near = 0.01;
         frustum.far = depth;
 
-        // 5. Update the shadow map camera
+        // 5. 更新shadow map的相机
         Matrix4.clone(lightView, shadowMapCamera.viewMatrix);
         Matrix4.inverse(lightView, shadowMapCamera.inverseViewMatrix);
         Matrix4.getTranslation(shadowMapCamera.inverseViewMatrix, shadowMapCamera.positionWC);
@@ -1389,7 +1393,7 @@ define([
                 this._shadowMapCullingVolume = shadowMapCamera.frustum.computeCullingVolume(position, direction, up);
 
                 if (this._passes.length === 1) {
-                    // Since there is only one pass, use the shadow map camera as the pass camera.
+                    // 因为只有一个pass，所以使用shadow map相机作为pass相机。
                     this._passes[0].camera.clone(shadowMapCamera);
                 }
             } else {
@@ -1545,7 +1549,7 @@ define([
         }
 
         if (command.receiveShadows && lightShadowMapsEnabled) {
-            // Only generate a receiveCommand if there is a shadow map originating from a light source.
+            // 仅当有来自光源的shadow map时才生成接收命令。
             var receiveShader;
             var receiveUniformMap;
             if (defined(result.receiveCommand)) {
@@ -1557,8 +1561,8 @@ define([
             result.castShadows = false;
             result.receiveShadows = true;
 
-            // If castShadows changed, recompile the receive shadows shader. The normal shading technique simulates
-            // self-shadowing so it should be turned off if castShadows is false.
+            // If castShadows changed, recompile the receive shadows shader. The normal shading technique simulates self-shadowing so it should be turned off if castShadows is false.
+            // 如果castShadows改变了，重新编译receive shadows的shader。普通的着色技术模拟自阴影，所以如果castShadows是false，它应该关闭。
             var castShadowsDirty = result.receiveShaderCastShadows !== command.castShadows;
             var shaderDirty = result.receiveShaderProgramId !== command.shaderProgram.id;
 

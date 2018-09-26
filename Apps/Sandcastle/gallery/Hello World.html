@@ -29,45 +29,14 @@ function startup(Cesium) {
 //Sandcastle_Begin
 var viewer = new Cesium.Viewer('cesiumContainer');
 
-    function addLines(pointA,pointB) {
+    var tileset = new Cesium.Cesium3DTileset({ url: "http://192.168.3.216:8080/Scene/Production_1.json"});
 
-        var earth = Cesium.Ellipsoid.WGS84;
-// start and end points on the surface of the earth
-        var startPoint = earth.cartographicToCartesian(Cesium.Cartographic.fromDegrees(pointA[0][0], pointA[0][1], 0.0));
-        var endPoint = earth.cartographicToCartesian(Cesium.Cartographic.fromDegrees(pointB[0][0], pointB[0][1], 0.0));
-
-
-// determine the midpoint (point will be inside the earth)
-        var midpointCartesian = startPoint.add(endPoint).divideByScalar(2.0);
-
-// move the midpoint to the surface of the earth
-        earth.scaleToGeodeticSurface(midpointCartesian);
-
-// add some altitude if you want (1000 km in this case)
-        var midpointCartographic = earth.cartesianToCartographic(midpointCartesian);
-        midpointCartographic.height = 1000000;
-        midpointCartesian = earth.cartographicToCartesian(midpointCartographic);
-
-// create a hermite spline that goes through these three points
-        var hermiteSpline = new Cesium.HermiteSpline([
-            {point: startPoint, time: 0.0},
-            {point: midpointCartesian, time: 0.5},
-            {point: endPoint, time: 1.0}
-        ]);
-
-// create a 20 point polyline that follows the spline
-        var polylinePoints = [];
-        for (var i = 0; i < 20; ++i) {
-            polylinePoints.push(hermiteSpline.evaluate(i / 20));
-        }
-
-        var polylineCollection = new Cesium.PolylineCollection();
-        var polyline = polylineCollection.add();
-        polyline.setPositions(polylinePoints);
-
-        var primitives = viewer.scene.primitives();
-        primitives.add(polylineCollection);
-    }
+    tileset.readyPromise.then(function(tileset) {
+        viewer.scene.primitives.add(tileset);
+        viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0.5, -0.2, tileset.boundingSphere.radius * 4.0));
+    }).otherwise(function(error) {
+        console.log(error);
+    });
 //Sandcastle_End
     Sandcastle.finishedLoading();
 }

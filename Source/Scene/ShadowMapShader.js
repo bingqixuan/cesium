@@ -163,6 +163,7 @@ define([
         var debugCascadeColors = shadowMap.debugCascadeColors;
         var softShadows = shadowMap.softShadows;
         var bias = isPointLight ? shadowMap._pointBias : (isTerrain ? shadowMap._terrainBias : shadowMap._primitiveBias);
+        var isViewShed = shadowMap._isViewShed;
 
         var defines = fs.defines.slice(0);
         var sources = fs.sources.slice(0);
@@ -176,6 +177,10 @@ define([
             defines.push('USE_CUBE_MAP_SHADOW');
         } else if (usesDepthTexture) {
             defines.push('USE_SHADOW_DEPTH_TEXTURE');
+        }
+
+        if (isViewShed){
+            defines.push('USE_VIEWSHED');
         }
 
         if (softShadows && !isPointLight) {
@@ -364,7 +369,15 @@ define([
         }
 
         fsSource +=
-            '    gl_FragColor.rgb *= visibility; \n' +
+            '    #ifdef USE_VIEWSHED \n' +
+            '       if(visibility < 1.0){ \n' +
+            '          gl_FragColor.rgb *= vec3(1.0, 0.0, 0.0); \n' +
+            '       } else{\n' +
+            '          gl_FragColor.rgb *= vec3(0.0 ,1.0, 0.0); \n' +
+            '       } \n' +
+            '    #else \n' +
+            '       gl_FragColor.rgb *= visibility; \n' +
+            '    #endif \n' +
             '} \n';
 
         sources.push(fsSource);

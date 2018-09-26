@@ -1478,6 +1478,7 @@ define([
         var context = this._context;
 
         // Update derived commands when any shadow maps become dirty
+        // 当任何shadow maps变dirty时，更新派生命令
         var shadowsDirty = false;
         var lastDirtyTime = frameState.shadowState.lastDirtyTime;
         if (command.lastDirtyTime !== lastDirtyTime) {
@@ -1816,9 +1817,8 @@ define([
         }
 
         if (frameState.shadowState.lightShadowsEnabled && command.receiveShadows && defined(command.derivedCommands.shadows)) {
-            // If the command receives shadows, execute the derived shadows command.
-            // Some commands, such as OIT derived commands, do not have derived shadow commands themselves
-            // and instead shadowing is built-in. In this case execute the command regularly below.
+            // 如果command接收到阴影，执行派生的阴影命令。
+            // 有些命令，例如OIT派生命令，本身并没有派生的shadow commands，而是内置了shadow commands。在这种情况下，定期执行下面的命令。
             command.derivedCommands.shadows.receiveCommand.execute(context, passState);
         } else {
             command.execute(context, passState);
@@ -1842,7 +1842,7 @@ define([
             command.execute(context, passState);
         } else if (defined(derivedCommands.depth)) {
             command = derivedCommands.depth.depthOnlyCommand;
-            command.execute(context, passState);
+            command.execute(context, passState); 
         }
     }
 
@@ -2378,7 +2378,7 @@ define([
                 continue;
             }
 
-            // Reset the command lists
+            // 清空command lists
             var j;
             var passes = shadowMap.passes;
             var numberOfPasses = passes.length;
@@ -2386,7 +2386,7 @@ define([
                 passes[j].commandList.length = 0;
             }
 
-            // Insert the primitive/model commands into the command lists
+            // 将primitive/model的绘制命令插入命令列表
             var sceneCommands = scene.frameState.commandList;
             insertShadowCastCommands(scene, sceneCommands, shadowMap);
 
@@ -2397,8 +2397,7 @@ define([
                 var numberOfCommands = pass.commandList.length;
                 for (var k = 0; k < numberOfCommands; ++k) {
                     var command = pass.commandList[k];
-                    // Set the correct pass before rendering into the shadow map because some shaders
-                    // conditionally render based on whether the pass is translucent or opaque.
+                    // 在渲染到shadow map之前先设置正确的pass，因为一些着色器根据pass是半透明还是不透明有条件地渲染。
                     uniformState.updatePass(command.pass);
                     executeCommand(command.derivedCommands.shadows.castCommands[i], scene, context, pass.passState);
                 }
@@ -2722,8 +2721,7 @@ define([
             return;
         }
 
-        // Check if the shadow maps are different than the shadow maps last frame.
-        // If so, the derived commands need to be updated.
+        // 检查shadow maps是否与上一帧的shadow maps不同，如果不同，那么derived commands需要更新
         for (var j = 0; j < length; ++j) {
             if (shadowMaps[j] !== frameState.shadowState.shadowMaps[j]) {
                 ++frameState.shadowState.lastDirtyTime;
