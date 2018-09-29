@@ -1899,7 +1899,7 @@ define([
     ///////////////////////////////////////////////////////////////////////////
 
     // When building programs for the first time, do not include modifiers for clipping planes and color since this is the version of the program that will be cached for use with other Models.
-    // µ±µÚÒ»´Î¹¹½¨³ÌĞòÊ±£¬²»Òª°üº¬ÓÃÓÚ¼ôÇĞÆ½ÃæºÍÑÕÉ«µÄĞŞÊÎ·û£¬ÒòÎªÕâÊÇ½«±»»º´æÓÃÓÚÆäËûÄ£ĞÍµÄ³ÌĞò°æ±¾¡£
+    // ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½Î·ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½Ç½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ÍµÄ³ï¿½ï¿½ï¿½æ±¾ï¿½ï¿½
     function createProgram(programToCreate, model, context) {
         var programId = programToCreate.programId;
         var techniqueId = programToCreate.techniqueId;
@@ -1936,7 +1936,7 @@ define([
             drawFS = 'uniform vec4 czm_pickColor;\n' + drawFS;
         }
 
-        // Ôö¼ÓºóÆÚ´¦ÀíĞ§¹û
+        // ï¿½ï¿½ï¿½Óºï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ğ§ï¿½ï¿½
         var s = '#ifdef APPLY_COLORCORRECTION \n' +
             'uniform float u_brightness;\n' +
             'uniform float u_contrast;\n' +
@@ -1998,7 +1998,7 @@ define([
 
         var defines = [];
         if(context.uniformState.gltf_ccshow ){
-            defines.push('APPLY_COLORCORRECTION');  // Èô¿ªÆôÁËÄ£ĞÍÑÕÉ«Ğ£Õı£¬ÔòÌí¼Ó¸Ã¶¨Òå
+            defines.push('APPLY_COLORCORRECTION');  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½É«Ğ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¸Ã¶ï¿½ï¿½ï¿½
         }
 		model._rendererResources.programs[programId] = ShaderProgram.fromCache({            context : context,
             vertexShaderSource : drawVS,
@@ -2006,7 +2006,7 @@ define([
             attributeLocations : attributeLocations,
             defines : defines
         });
-        model.ccshow = context.uniformState.gltf_ccshow; // ±£´æÑÕÉ«Ğ£Õı×´Ì¬
+        model.ccshow = context.uniformState.gltf_ccshow; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«Ğ£ï¿½ï¿½×´Ì¬
     }
 
     var scratchCreateProgramJob = new CreateProgramJob();
@@ -2020,7 +2020,7 @@ define([
         }
 
         // PERFORMANCE_IDEA: this could be more fine-grained by looking at the shader's bufferView's to determine the buffer dependencies.
-        // ¹ØÓÚĞÔÄÜµÄÏë·¨£ºÍ¨¹ı²é¿´×ÅÉ«Æ÷µÄbufferViewÀ´È·¶¨»º³åÇøÒÀÀµ¹ØÏµ£¬Õâ¿ÉÄÜ»á¸ü¼Ó¾«Ï¸¡£
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Üµï¿½ï¿½ë·¨ï¿½ï¿½Í¨ï¿½ï¿½ï¿½é¿´ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½bufferViewï¿½ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü»ï¿½ï¿½ï¿½Ó¾ï¿½Ï¸ï¿½ï¿½
         if (loadResources.pendingBufferLoads !== 0) {
             return;
         }
@@ -3252,7 +3252,7 @@ define([
             model._cachedGeometryByteLength += getGeometryByteLength(cachedResources.buffers);
             model._cachedTexturesByteLength += getTexturesByteLength(cachedResources.textures);
         } else {
-            createBuffers(model, frameState); // Ê¹ÓÃ glTF bufferViews
+            createBuffers(model, frameState); // Ê¹ï¿½ï¿½ glTF bufferViews
             createPrograms(model, frameState);
             createSamplers(model, context);
             loadTexturesFromBufferViews(model);
@@ -3270,7 +3270,7 @@ define([
             // Could use copy-on-write if it is worth it.  Probably overkill.
         }
 
-        createUniformMaps(model, context);               // Ê¹ÓÃ glTF materials/techniques
+        createUniformMaps(model, context);               // Ê¹ï¿½ï¿½ glTF materials/techniques
         createRuntimeNodes(model, context, scene3DOnly); // using glTF scene
     }
 
@@ -4099,7 +4099,6 @@ define([
         if (this._state === ModelState.LOADING) {
             // Transition from LOADING -> LOADED once resources are downloaded and created.
             // Textures may continue to stream in while in the LOADED state.
-            // ÏÂÔØ²¢´´½¨×ÊÔ´ºó£¬´Ó LOADING ×ªµ½ LOADED ×´Ì¬¡£ÔÚ LOADED ×´Ì¬ÏÂ£¬ÎÆÀí¿ÉÄÜ»á¼ÌĞøÁ÷Èë
             if (loadResources.pendingBufferLoads === 0) {
                 if (!loadResources.initialized) {
                     frameState.brdfLutGenerator.update(frameState);
@@ -4296,14 +4295,14 @@ define([
             var shouldRegenerateShaders = this._clippingPlanesState !== currentClippingPlanesState;
             this._clippingPlanesState = currentClippingPlanesState;
 
-            // Èç¹ûÑÕÉ«×ÅÉ«Ïà±ÈÓÚÉÏ´Î·¢ÉúÁË¸Ä±ä¾ÍÖØĞÂÉú³É×ÅÉ«Æ÷£¬
+            // ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï´Î·ï¿½ï¿½ï¿½ï¿½Ë¸Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½
             var currentlyColorShadingEnabled = isColorShadingEnabled(this);
             if (currentlyColorShadingEnabled !== this._colorShadingEnabled) {
                 this._colorShadingEnabled = currentlyColorShadingEnabled;
                 shouldRegenerateShaders = true;
             }
 
-            // ÈôÄ£ĞÍÑÕÉ«Ğ£Õı×´Ì¬·¢Éú¸Ä±ä£¬ÔòĞèÒªÖØĞÂÉú³Éshader
+            // ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½É«Ğ£ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ä£¬ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½shader
             if (this.ccshow !== frameState.context._us.gltf_ccshow){
                 shouldRegenerateShaders = true;
                 this.ccshow = frameState.context._us.gltf_ccshow;

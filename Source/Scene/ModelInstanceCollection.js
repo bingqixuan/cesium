@@ -64,30 +64,28 @@ define([
     };
 
     /**
-     * A 3D model instance collection. All instances reference the same underlying model, but have unique
-     * per-instance properties like model matrix, pick id, etc.
+     * 一个3D模型实例集合。所有实例都引用相同的底层模型，但是每个实例都有独特的属性，如模型矩阵、选择id等
      *
-     * Instances are rendered relative-to-center and for best results instances should be positioned close to one another.
-     * Otherwise there may be precision issues if, for example, instances are placed on opposite sides of the globe.
+     * 实例是相对于中心呈现的，为了获得最好的结果，实例应该彼此靠近。否则，如果实例被放置在地球的两端，那么可能会存在精度问题。
      *
      * @alias ModelInstanceCollection
      * @constructor
      *
      * @param {Object} options Object with the following properties:
-     * @param {Object[]} [options.instances] An array of instances, where each instance contains a modelMatrix and optional batchId when options.batchTable is defined.
-     * @param {Cesium3DTileBatchTable} [options.batchTable] The batch table of the instanced 3D Tile.
-     * @param {Resource|String} [options.url] The url to the .gltf file.
-     * @param {Object} [options.requestType] The request type, used for request prioritization
-     * @param {Object|ArrayBuffer|Uint8Array} [options.gltf] A glTF JSON object, or a binary glTF buffer.
-     * @param {Resource|String} [options.basePath=''] The base path that paths in the glTF JSON are relative to.
-     * @param {Boolean} [options.dynamic=false] Hint if instance model matrices will be updated frequently.
-     * @param {Boolean} [options.show=true] Determines if the collection will be shown.
+     * @param {Object[]} [options.instances] 一个实例数组，其中每个实例包含一个模型矩阵和可选的batchId（如果options.batchTable定义了的话）。
+     * @param {Cesium3DTileBatchTable} [options.batchTable] 实例化的3D Tile的批处理表。
+     * @param {Resource|String} [options.url] gltf文件的url.
+     * @param {Object} [options.requestType] 请求类型，用于请求优先级。
+     * @param {Object|ArrayBuffer|Uint8Array} [options.gltf] 一个glTF JSON对象，或者一个二进制的glTF buffer。
+     * @param {Resource|String} [options.basePath=''] glTF JSON中路径相对的基本路径。
+     * @param {Boolean} [options.dynamic=false] 提示实例模型矩阵是否会频繁更新。
+     * @param {Boolean} [options.show=true] 确定是否显示。
      * @param {Boolean} [options.allowPicking=true] When <code>true</code>, each instance is pickable with {@link Scene#pick}.
-     * @param {Boolean} [options.asynchronous=true] Determines if model WebGL resource creation will be spread out over several frames or block until completion once all glTF files are loaded.
-     * @param {Boolean} [options.incrementallyLoadTextures=true] Determine if textures may continue to stream in after the model is loaded.
-     * @param {ShadowMode} [options.shadows=ShadowMode.ENABLED] Determines whether the collection casts or receives shadows from each light source.
-     * @param {Boolean} [options.debugShowBoundingVolume=false] For debugging only. Draws the bounding sphere for the collection.
-     * @param {Boolean} [options.debugWireframe=false] For debugging only. Draws the instances in wireframe.
+     * @param {Boolean} [options.asynchronous=true] 确定模型的WebGL资源创建是否会分散到多个帧或块中，直到加载完所有glTF文件为止。
+     * @param {Boolean} [options.incrementallyLoadTextures=true] 确定模型加载后纹理是否会继续流入。
+     * @param {ShadowMode} [options.shadows=ShadowMode.ENABLED] 确定Collection是否从每个光源投射或接收阴影。
+     * @param {Boolean} [options.debugShowBoundingVolume=false] 仅供调试。为Collection绘制边界球。
+     * @param {Boolean} [options.debugWireframe=false] 仅供调试。绘制实例的线框。
      *
      * @exception {DeveloperError} Must specify either <options.gltf> or <options.url>, but not both.
      * @exception {DeveloperError} Shader program cannot be optimized for instancing. Parameters cannot have any of the following semantics: MODEL, MODELINVERSE, MODELVIEWINVERSE, MODELVIEWPROJECTIONINVERSE, MODELINVERSETRANSPOSE.
@@ -123,8 +121,8 @@ define([
 
         this._instances = createInstances(this, options.instances);
 
-        // When the model instance collection is backed by an i3dm tile,
-        // use its batch table resources to modify the shaders, attributes, and uniform maps.
+        // When the model instance collection is backed by an i3dm tile, use its batch table resources to modify the shaders, attributes, and uniform maps.
+        // 当模型实例集合由i3dm块支持时，使用它的批处理表资源来修改着色器、属性和统一映射。
         this._batchTable = options.batchTable;
 
         this._model = undefined;
@@ -456,7 +454,7 @@ define([
             bufferData = new Float32Array(instancesLength * vertexSizeInFloats);
         }
         if (collection._dynamic) {
-            // Hold onto the buffer data so we don't have to allocate new memory every frame.
+            // 保留缓冲数据，这样我们就不必在每帧分配新的内存。
             collection._vertexBufferTypedArray = bufferData;
         }
 
