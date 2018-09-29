@@ -40,6 +40,17 @@
             baseLayerPicker: false
         });
 
+        var transformations = {
+            translationX : 0.0,
+            translationY : 0.0,
+            translationZ : 0.0,
+            rotationHeading : 0.0,
+            rotationPitch : 0.0,
+            rotationRoll : 0.0,
+            scaleX : 1.0,
+            scaleY : 1.0,
+            scaleZ : 1.0
+        };
 //        viewer.extend(Cesium.viewerCesiumInspectorMixin);
         var obj = {
             pos: Cesium.Cartesian3.fromDegrees(-123.075, 44.045000, 5000.0),
@@ -59,10 +70,10 @@
         var position = obj.pos;
         var converter = obj.converter;
         var comments = obj.comments;
-        var originMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter)
+        var originMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter);
         var planePrimitive = scene.primitives.add(Cesium.Model.fromGltf({
             url: '../../SampleData/models/CesiumAir/Cesium_Air.glb',
-            modelMatrix: Cesium.Matrix4.clone(originMatrix),
+            modelMatrix: originMatrix,
             minimumPixelSize: 128
         }));
 
@@ -77,182 +88,12 @@
             var heading = Cesium.Math.toRadians(230.0);
             var pitch = Cesium.Math.toRadians(-20.0);
             camera.lookAt(center, new Cesium.HeadingPitchRange(heading, pitch, r * 2.0));
-        });
 
-        var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(position, hprRollZero, Cesium.Ellipsoid.WGS84, converter);
-//        p = scene.primitives.add(new Cesium.DebugModelMatrixPrimitive({
-        p = scene.primitives.add(new Cesium.ModelTransformPrimitive({
-            modelMatrix: modelMatrix,
-            length: 300.0,
-            width: 10.0,
-            id: 'control_'
-        }));
-
-        var axisID;
-        var pri, currentPosition, lastPosition;
-//        var pri, mousePosition, startMousePosition;
-        var handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
-        handler.setInputAction(function(movement) {
-            pri = scene.pick(movement.position);
-            if(pri && pri.primitive._id.split('_').includes('control')){
-                changeColor(pri.primitive._id);
-                axisID = pri.primitive._id;
-//                mousePosition = startMousePosition = Cesium.Cartesian3.clone(movement.position);
-                currentPosition = lastPosition = Cesium.Cartesian3.clone(scene.pickPosition(movement.position));
-            }
-        }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
-        handler.setInputAction(function() {
-            recoverColor();
-            pri = undefined;
-            axisID = undefined;
-            scene.screenSpaceCameraController.enableRotate = true;
-            scene.screenSpaceCameraController.enableTranslate = true;
-            scene.screenSpaceCameraController.enableZoom = true;
-            scene.screenSpaceCameraController.enableTilt = true;
-            scene.screenSpaceCameraController.enableLook = true;
-        }, Cesium.ScreenSpaceEventType.LEFT_UP);
-        handler.setInputAction(function(movement) {
-            if(pri){
-//                mousePosition = movement.endPosition;
-                currentPosition = Cesium.Cartesian3.clone(scene.pickPosition(movement.endPosition));
-                scene.screenSpaceCameraController.enableRotate = false;
-                scene.screenSpaceCameraController.enableTranslate = false;
-                scene.screenSpaceCameraController.enableZoom = false;
-                scene.screenSpaceCameraController.enableTilt = false;
-                scene.screenSpaceCameraController.enableLook = false;
-            }
-        }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-
-        function changeColor(id) {
-            recoverColor();
-            if(id === 'control_x'){
-                p._primitive._primitives["0"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
-            }else if(id === 'control_y'){
-                p._primitive._primitives["1"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
-            }else if(id === 'control_z'){
-                p._primitive._primitives["2"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
-            }else if(id === 'control_xy'){
-                p._primitive._primitives["3"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
-            }else if(id === 'control_xz'){
-                p._primitive._primitives["4"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
-            }else if(id === 'control_yz'){
-                p._primitive._primitives["5"].appearance.material.uniforms.color = Cesium.Color.YELLOW;
-            }
-        }
-
-        function recoverColor() {
-            p._primitive._primitives["0"].appearance.material.uniforms.color = Cesium.Color.RED;
-            p._primitive._primitives["1"].appearance.material.uniforms.color = Cesium.Color.GREEN;
-            p._primitive._primitives["2"].appearance.material.uniforms.color = Cesium.Color.BLUE;
-            p._primitive._primitives["3"].appearance.material.uniforms.color = Cesium.Color.BLUE;
-            p._primitive._primitives["4"].appearance.material.uniforms.color = Cesium.Color.GREEN;
-            p._primitive._primitives["5"].appearance.material.uniforms.color = Cesium.Color.RED;
-        }
-
-        viewer.clock.onTick.addEventListener(function() {
-            if (axisID && currentPosition) {
-                if(axisID === 'control_x'){
-                    var x = currentPosition.x - lastPosition.x;
-                    if(x > 0){
-                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByTranslation(planePrimitive.modelMatrix, new Cesium.Cartesian3(2, 0, 0), new Cesium.Matrix4());
-                    }else if(x < 0){
-                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByTranslation(planePrimitive.modelMatrix, new Cesium.Cartesian3(-2, 0, 0), new Cesium.Matrix4());
-                    }
-                }else if(axisID === 'control_y'){
-                    var y = currentPosition.y - lastPosition.y;
-                    if(y > 0){
-                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByTranslation(planePrimitive.modelMatrix, new Cesium.Cartesian3(0, 2, 0), new Cesium.Matrix4());
-                    }else if(y < 0){
-                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByTranslation(planePrimitive.modelMatrix, new Cesium.Cartesian3(0, -2, 0), new Cesium.Matrix4());
-                    }
-                }else if(axisID === 'control_z'){
-                    var z = currentPosition.z - lastPosition.z;
-                    if(z > 0){
-                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByTranslation(planePrimitive.modelMatrix, new Cesium.Cartesian3(0, 0, 2), new Cesium.Matrix4());
-                    }else if(z < 0){
-                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByTranslation(planePrimitive.modelMatrix, new Cesium.Cartesian3(0, 0, -2), new Cesium.Matrix4());
-                    }
-                }else if(axisID === 'control_xz'){
-                    var deltaX = currentPosition.x - lastPosition.x;
-                    var deltaZ = currentPosition.z - lastPosition.z;
-//                    if(deltaX)
-                    if(deltaX > 0 && deltaZ < 0 ){
-                        hpRoll.pitch -= deltaRadians;
-                        if (hpRoll.pitch < -Cesium.Math.TWO_PI) {
-                            hpRoll.pitch += Cesium.Math.TWO_PI;
-                        }
-//                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
-//                        var matrix = new Cesium.Matrix3()
-//                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByMatrix3(planePrimitive.modelMatrix, Cesium.Matrix3.fromRotationY(deltaRadians, new Cesium.Matrix3()), new Cesium.Matrix4());
-
-                        var rotateMatrix3 = new Cesium.Matrix3();
-
-                        var quaternion = Cesium.Quaternion.fromAxisAngle(new Cesium.Cartesian3(0, 2, 0), deltaRadians);
-                        Cesium.Matrix3.fromQuaternion(quaternion, rotateMatrix3);
-//                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByMatrix3(planePrimitive.modelMatrix, rotateMatrix3, new Cesium.Matrix4());
-
-                        var mat = Cesium.Matrix4.inverse(originMatrix, new Cesium.Matrix4());
-                        var neg_center = Cesium.Matrix4.multiplyByPoint(mat, new Cesium.Cartesian3(0, 57, 0), new Cesium.Cartesian3());
-
-                        var center = Cesium.Cartesian3.negate(neg_center, new Cesium.Cartesian3());
-                        var transformMatrix = Cesium.Matrix4.fromTranslation(center, new Cesium.Matrix4());
-                        var transformMatrix1 = Cesium.Matrix4.fromTranslation(neg_center, new Cesium.Matrix4());
-
-                        var zeroTranslation = new Cesium.Cartesian3(0, 0, 0);
-                        var newValue = Cesium.Matrix4.fromRotationTranslation(rotateMatrix3, zeroTranslation);
-                        newValue = Cesium.Matrix4.multiply(newValue, transformMatrix, newValue);
-
-                        planePrimitive.modelMatrix = Cesium.Matrix4.multiply(originMatrix, transformMatrix1, new Cesium.Matrix4());
-                        planePrimitive.modelMatrix = Cesium.Matrix4.multiply(planePrimitive.modelMatrix, newValue, newValue);
-
-
-
-                    }else if(deltaX < 0 && deltaZ > 0 ){
-                        hpRoll.pitch += deltaRadians;
-                        if (hpRoll.pitch > Cesium.Math.TWO_PI) {
-                            hpRoll.pitch -= Cesium.Math.TWO_PI;
-                        }
-//                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
-//                        var matrix =  Cesium.Matrix4.fromRotationTranslation(Cesium.Matrix3.fromRotationY(-deltaRadians, new Cesium.Matrix3()));
-                        planePrimitive.modelMatrix = Cesium.Matrix4.multiplyByMatrix3(planePrimitive.modelMatrix, Cesium.Matrix3.fromRotationY(-deltaRadians, new Cesium.Matrix3()), new Cesium.Matrix4());
-                    }
-                }else if(axisID === 'control_xy'){
-                    var deltaX = currentPosition.x - lastPosition.x;
-                    var deltaY = currentPosition.y - lastPosition.y;
-//                    if(deltaX)
-                    if(deltaX > 0 && deltaY < 0 ){
-                        hpRoll.heading += deltaRadians;
-                        if (hpRoll.heading > Cesium.Math.TWO_PI) {
-                            hpRoll.heading -= Cesium.Math.TWO_PI;
-                        }
-                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
-                    }else if(deltaX < 0 && deltaY > 0 ){
-                        hpRoll.heading -= deltaRadians;
-                        if (hpRoll.heading < 0.0) {
-                            hpRoll.heading += Cesium.Math.TWO_PI;
-                        }
-                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
-                    }
-                }else if(axisID === 'control_yz'){
-                    var deltaY = currentPosition.y - lastPosition.y;
-                    var deltaZ = currentPosition.z - lastPosition.z;
-//                    if(deltaX)
-                    if(deltaY > 0 && deltaZ < 0 ){
-                        hpRoll.roll += deltaRadians;
-                        if (hpRoll.roll > Cesium.Math.TWO_PI) {
-                            hpRoll.roll -= Cesium.Math.TWO_PI;
-                        }
-                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
-                    }else if(deltaY < 0 && deltaZ > 0 ){
-                        hpRoll.roll -= deltaRadians;
-                        if (hpRoll.roll < 0.0) {
-                            hpRoll.roll += Cesium.Math.TWO_PI;
-                        }
-                        Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, converter, planePrimitive.modelMatrix);
-                    }
-                }
-                lastPosition = Cesium.Cartesian3.clone(currentPosition);
-            }
+            new Cesium.ModelTransformControl({
+                scene: viewer.scene,
+                position: position,
+                model: planePrimitive
+            })
         });
 
 //Sandcastle_End
