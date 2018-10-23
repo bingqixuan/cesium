@@ -1,8 +1,10 @@
 define([
         '../Core/BoundingSphere',
+        '../Core/Cartesian2',
         '../Core/Cartesian3',
         '../Core/Cartesian4',
         '../Core/Cartographic',
+        '../Core/Check',
         '../Core/clone',
         '../Core/Color',
         '../Core/combine',
@@ -74,9 +76,11 @@ define([
         './ShadowMode'
     ], function(
         BoundingSphere,
+        Cartesian2,
         Cartesian3,
         Cartesian4,
         Cartographic,
+        Check,
         clone,
         Color,
         combine,
@@ -282,6 +286,8 @@ define([
      * @param {Number} [options.silhouetteSize=0.0] The size of the silhouette in pixels.
      * @param {ClippingPlaneCollection} [options.clippingPlanes] The {@link ClippingPlaneCollection} used to selectively disable rendering the model.
      * @param {Boolean} [options.dequantizeInShader=true] Determines if a {@link https://github.com/google/draco|Draco} encoded model is dequantized on the GPU. This decreases total memory usage for encoded models.
+     * @param {Cartesian2} [options.imageBasedLightingFactor=Cartesian2(1.0, 1.0)] Scales diffuse and specular image-based lighting from the earth, sky, atmosphere and star skybox.
+     * @param {Cartesian3} [options.lightColor] The color and intensity of the sunlight used to shade the model.
      *
      * @see Model.fromGltf
      *
@@ -656,6 +662,11 @@ define([
         this._rtcCenter2D = undefined;  // in projected world coordinates
 
         this._keepPipelineExtras = options.keepPipelineExtras; // keep the buffers in memory for use in other applications
+
+        this._imageBasedLightingFactor = new Cartesian2(1.0, 1.0);
+        Cartesian2.clone(options.imageBasedLightingFactor, this._imageBasedLightingFactor);
+        this._lightColor = Cartesian3.clone(options.lightColor);
+        this._regenerateShaders = false;
     }
 
     defineProperties(Model.prototype, {
@@ -1072,6 +1083,59 @@ define([
         pickIds : {
             get : function() {
                 return this._pickIds;
+            }
+        },
+
+        /**
+         * Cesium adds lighting from the earth, sky, atmosphere, and star skybox. This cartesian is used to scale the final
+         * diffuse and specular lighting contribution from those sources to the final color. A value of 0.0 will disable those light sources.
+         *
+         * @memberof Model.prototype
+         *
+         * @type {Cartesian2}
+         * @default Cartesian2(1.0, 1.0)
+         */
+        imageBasedLightingFactor : {
+            get : function() {
+                return this._imageBasedLightingFactor;
+            },
+            set : function(value) {
+                //>>includeStart('debug', pragmas.debug);
+                Check.typeOf.object('imageBasedLightingFactor', value);
+                Check.typeOf.number.greaterThanOrEquals('imageBasedLightingFactor.x', value.x, 0.0);
+                Check.typeOf.number.lessThanOrEquals('imageBasedLightingFactor.x', value.x, 1.0);
+                Check.typeOf.number.greaterThanOrEquals('imageBasedLightingFactor.y', value.y, 0.0);
+                Check.typeOf.number.lessThanOrEquals('imageBasedLightingFactor.y', value.y, 1.0);
+                //>>includeEnd('debug');
+                this._regenerateShaders = this._regenerateShaders || (this._imageBasedLightingFactor.x > 0.0 && value.x === 0.0) || (this._imageBasedLightingFactor.x === 0.0 && value.x > 0.0);
+                this._regenerateShaders = this._regenerateShaders || (this._imageBasedLightingFactor.y > 0.0 && value.y === 0.0) || (this._imageBasedLightingFactor.y === 0.0 && value.y > 0.0);
+                Cartesian2.clone(value, this._imageBasedLightingFactor);
+            }
+        },
+
+        /**
+         * The color and intensity of the sunlight used to shade the model.
+         * <p>
+         * For example, disabling additional light sources by setting <code>model.imageBasedLightingFactor = new Cesium.Cartesian2(0.0, 0.0)</code> will make the
+         * model much darker. Here, increasing the intensity of the light source will make the model brighter.
+         * </p>
+         *
+         * @memberof Model.prototype
+         *
+         * @type {Cartesian3}
+         * @default undefined
+         */
+        lightColor : {
+            get : function() {
+                return this._lightColor;
+            },
+            set : function(value) {
+                var lightColor = this._lightColor;
+                if (value === lightColor || Cartesian3.equals(value, lightColor)) {
+                    return;
+                }
+                this._regenerateShaders = this._regenerateShaders || (defined(lightColor) && !defined(value)) || (defined(value) && !defined(lightColor));
+                this._lightColor = Cartesian3.clone(value, lightColor);
             }
         }
     });
@@ -1901,7 +1965,7 @@ define([
     ///////////////////////////////////////////////////////////////////////////
 
     // When building programs for the first time, do not include modifiers for clipping planes and color since this is the version of the program that will be cached for use with other Models.
-    // ����һ�ι�������ʱ����Ҫ�������ڼ���ƽ�����ɫ�����η�����Ϊ���ǽ���������������ģ�͵ĳ���汾��
+    // ??????��????????????????????????????????????��????????????????????????????????��??
     function createProgram(programToCreate, model, context) {
         var programId = programToCreate.programId;
         var techniqueId = programToCreate.techniqueId;
@@ -1938,7 +2002,7 @@ define([
             drawFS = 'uniform vec4 czm_pickColor;\n' + drawFS;
         }
 
-        // ���Ӻ��ڴ���Ч��
+        // ??????????��??
         var s = '#ifdef APPLY_COLORCORRECTION \n' +
             'uniform float u_brightness;\n' +
             'uniform float u_contrast;\n' +
@@ -1947,8 +2011,13 @@ define([
             '#endif \n';
         drawFS = s + drawFS;
         drawFS = ModelUtility.modifyFragmentShaderForPostProcess(drawFS);
+		if (model._imageBasedLightingFactor.x > 0.0 || model._imageBasedLightingFactor.y > 0.0) {
+            drawFS = '#define USE_IBL_LIGHTING \n\n' + drawFS;
+        }
 
-        createAttributesAndProgram(programId, techniqueId, drawFS, drawVS, model, context);
+        if (defined(model._lightColor)) {
+            drawFS = '#define USE_CUSTOM_LIGHT_COLOR \n\n' + drawFS;
+        }        createAttributesAndProgram(programId, techniqueId, drawFS, drawVS, model, context);
     }
 
     function recreateProgram(programToCreate, model, context) {
@@ -1990,6 +2059,14 @@ define([
             drawFS = 'uniform vec4 czm_pickColor;\n' + drawFS;
         }
 
+        if (model._imageBasedLightingFactor.x > 0.0 || model._imageBasedLightingFactor.y > 0.0) {
+            drawFS = '#define USE_IBL_LIGHTING \n\n' + drawFS;
+        }
+
+        if (defined(model._lightColor)) {
+            drawFS = '#define USE_CUSTOM_LIGHT_COLOR \n\n' + drawFS;
+        }
+
         createAttributesAndProgram(programId, techniqueId, drawFS, drawVS, model, context);
     }
 
@@ -2000,7 +2077,7 @@ define([
 
         var defines = [];
         if(context.uniformState.gltf_ccshow ){
-            defines.push('APPLY_COLORCORRECTION');  // ��������ģ����ɫУ��������Ӹö���
+            defines.push('APPLY_COLORCORRECTION');  // ??????????????��?????????????
         }
 		model._rendererResources.programs[programId] = ShaderProgram.fromCache({            context : context,
             vertexShaderSource : drawVS,
@@ -2008,7 +2085,7 @@ define([
             attributeLocations : attributeLocations,
             defines : defines
         });
-        model.ccshow = context.uniformState.gltf_ccshow; // ������ɫУ��״̬
+        model.ccshow = context.uniformState.gltf_ccshow; // ???????��????
     }
 
     var scratchCreateProgramJob = new CreateProgramJob();
@@ -2022,7 +2099,7 @@ define([
         }
 
         // PERFORMANCE_IDEA: this could be more fine-grained by looking at the shader's bufferView's to determine the buffer dependencies.
-        // �������ܵ��뷨��ͨ���鿴��ɫ����bufferView��ȷ��������������ϵ������ܻ���Ӿ�ϸ��
+        // ?????????????????????????bufferView?????????????????????????????????
         if (loadResources.pendingBufferLoads !== 0) {
             return;
         }
@@ -2885,6 +2962,18 @@ define([
         };
     }
 
+    function createIBLFactorFunction(model) {
+        return function() {
+            return model._imageBasedLightingFactor;
+        };
+    }
+
+    function createLightColorFunction(model) {
+        return function() {
+            return model._lightColor;
+        };
+    }
+
     function triangleCountFromPrimitiveIndices(primitive, indicesCount) {
         switch (primitive.mode) {
             case PrimitiveType.TRIANGLES:
@@ -2977,7 +3066,9 @@ define([
                 gltf_colorBlend : createColorBlendFunction(model),
                 gltf_clippingPlanes: createClippingPlanesFunction(model),
                 gltf_clippingPlanesEdgeStyle: createClippingPlanesEdgeStyleFunction(model),
-                gltf_clippingPlanesMatrix: createClippingPlanesMatrixFunction(model)
+                gltf_clippingPlanesMatrix: createClippingPlanesMatrixFunction(model),
+                gltf_iblFactor : createIBLFactorFunction(model),
+                gltf_lightColor : createLightColorFunction(model)
             });
 
             // Allow callback to modify the uniformMap
@@ -3253,7 +3344,7 @@ define([
             model._cachedGeometryByteLength += getGeometryByteLength(cachedResources.buffers);
             model._cachedTexturesByteLength += getTexturesByteLength(cachedResources.textures);
         } else {
-            createBuffers(model, frameState); // ʹ�� glTF bufferViews
+            createBuffers(model, frameState); // ??? glTF bufferViews
             createPrograms(model, frameState);
             createSamplers(model, context);
             loadTexturesFromBufferViews(model);
@@ -3271,7 +3362,7 @@ define([
             // Could use copy-on-write if it is worth it.  Probably overkill.
         }
 
-        createUniformMaps(model, context);               // ʹ�� glTF materials/techniques
+        createUniformMaps(model, context);               // ??? glTF materials/techniques
         createRuntimeNodes(model, context, scene3DOnly); // using glTF scene
     }
 
@@ -4295,17 +4386,17 @@ define([
                 currentClippingPlanesState = clippingPlanes.clippingPlanesState;
             }
 
-            var shouldRegenerateShaders = this._clippingPlanesState !== currentClippingPlanesState;
+            var shouldRegenerateShaders = this._clippingPlanesState !== currentClippingPlanesState || this._regenerateShaders;
             this._clippingPlanesState = currentClippingPlanesState;
 
-            // �����ɫ��ɫ������ϴη����˸ı������������ɫ����
+            // ????????????????��???????????????????????
             var currentlyColorShadingEnabled = isColorShadingEnabled(this);
             if (currentlyColorShadingEnabled !== this._colorShadingEnabled) {
                 this._colorShadingEnabled = currentlyColorShadingEnabled;
                 shouldRegenerateShaders = true;
             }
 
-            // ��ģ����ɫУ��״̬�����ı䣬����Ҫ��������shader
+            // ????????��????????????????????????shader
             if (this.ccshow !== frameState.context._us.gltf_ccshow){
                 shouldRegenerateShaders = true;
                 this.ccshow = frameState.context._us.gltf_ccshow;
@@ -4317,6 +4408,8 @@ define([
                 updateColor(this, frameState, false);
                 updateSilhouette(this, frameState, false);
             }
+
+            this._regenerateShaders = false;
         }
 
         if (justLoaded) {
@@ -4410,8 +4503,8 @@ define([
         destroyIfNotCached(rendererResources, cachedRendererResources);
 
         var programId;
-		if (isClippingEnabled(model) || isColorShadingEnabled(model) || !frameState.context._us.gltf_ccshow ) {            rendererResources.programs = {};
-            rendererResources.silhouettePrograms = {};
+        if (isClippingEnabled(model) || isColorShadingEnabled(model) || model._regenerateShaders || !frameState.context._us.gltf_ccshow ) {
+            rendererResources.programs = {};            rendererResources.silhouettePrograms = {};
 
             var visitedPrograms = {};
             var techniques = model._sourceTechniques;
