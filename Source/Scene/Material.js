@@ -21,6 +21,7 @@ define([
         '../Shaders/Materials/BumpMapMaterial',
         '../Shaders/Materials/CheckerboardMaterial',
         '../Shaders/Materials/DotMaterial',
+        '../Shaders/Materials/ScatterEffectMaterial',
         '../Shaders/Materials/ElevationContourMaterial',
         '../Shaders/Materials/ElevationRampMaterial',
         '../Shaders/Materials/FadeMaterial',
@@ -58,6 +59,7 @@ define([
         BumpMapMaterial,
         CheckerboardMaterial,
         DotMaterial,
+        ScatterEffectMaterial,
         ElevationContourMaterial,
         ElevationRampMaterial,
         FadeMaterial,
@@ -1442,6 +1444,26 @@ define([
     });
 
     /**
+     * ScatterEffect特效
+     * @type {string}
+     */
+    Material.ScatterEffectType = 'ScatterEffect';
+    Material._materialCache.addMaterial(Material.ScatterEffectType, {
+        fabric : {
+            type : Material.ScatterEffectType,
+            uniforms : {
+                color : new Color(1.0, 0.0, 0.0, 0.7),
+                time : 0.1
+            },
+            source : ScatterEffectMaterial
+        },
+        translucent : function(material) {
+            var uniforms = material.uniforms;
+            return uniforms.color.alpha < 1.0;
+        }
+    });
+
+    /**
      * Gets the name of the polyline arrow material.
      * @type {String}
      * @readonly
@@ -1549,7 +1571,8 @@ define([
             uniforms : {
                 image: Material.DefaultImageId,
                 minimumHeight: 0.0,
-                maximumHeight: 10000.0
+                maximumHeight: 10000.0,
+                visualHeight: 100.0
             },
             source : ElevationRampMaterial
         },

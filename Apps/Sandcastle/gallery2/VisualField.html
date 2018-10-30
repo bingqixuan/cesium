@@ -35,6 +35,18 @@
             }),
             baseLayerPicker : false,
         });
+
+
+        var tileset = new Cesium.Cesium3DTileset({ url: Cesium.IonResource.fromAssetId(6074) });
+        viewer.scene.primitives.add(tileset);
+
+        tileset.readyPromise.then(function(){
+            var boundingSphere = tileset.boundingSphere;
+            viewer.camera.viewBoundingSphere(boundingSphere, new Cesium.HeadingPitchRange(0.0, -0.5, boundingSphere.radius + 500.0));
+            viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+        });
+
+        viewer.scene.globe.enableLighting = true;
         var scene = viewer.scene;
         var camera1 = new Cesium.Camera(scene);
         camera1.position = Cesium.Cartesian3.fromDegrees(-74.01076015,40.7038482,400);

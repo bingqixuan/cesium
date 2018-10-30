@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>舰艇巡航动画</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<script id="cesium_sandcastle_script">
+    function startup(Cesium) {
+        let viewer = new Cesium.Viewer('cesiumContainer', {
+            baseLayerPicker: true,
+            animation: true,
+            timeline: true
+        });
+
+        let fadedLine = new Cesium.StripeMaterialProperty({
+            evenColor: Cesium.Color.WHITE,
+            oddColor: Cesium.Color.PURPLE,
+            repeat: 5,
+            offset: 0.8,
+            orientation: Cesium.StripeOrientation.VERTICAL
+        });
+
+        let start = Cesium.JulianDate.fromDate(new Date(2017, 7, 17, 16));
+        let stop = Cesium.JulianDate.addSeconds(start, 360, new Cesium.JulianDate());
+
+        viewer.clock.startTime = start.clone();
+        viewer.clock.stopTime = stop.clone();
+        viewer.clock.currentTime = start.clone();
+        viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; //Loop at the end
+        viewer.clock.multiplier = 10;
+
+        viewer.timeline.zoomTo(start, stop);
+        let positions = [125, 34, 126, 34, 125, 36];
+
+
+        let property = new Cesium.SampledPositionProperty();
+        for (let i = 0; i < positions.length; i = i + 2) {
+            let time = Cesium.JulianDate.addSeconds(start, 180 * i, new Cesium.JulianDate());
+            let position = Cesium.Cartesian3.fromDegrees(positions[i], positions[i + 1]);
+            property.addSample(time, position);
+        }
+
+        let entity = viewer.entities.add({
+            name: 'test',
+            model: {
+                uri: '../../SampleData/models/Destroyer/dfqzj.gltf',
+                minimumPixelSize: 128,
+                maximumScale: 20000
+            },
+            path: {
+                material: fadedLine,
+                leadTime: new Cesium.ConstantProperty(0),
+                trailTime: new Cesium.ConstantProperty(5400)
+            },
+            position: property,
+            orientation: new Cesium.VelocityOrientationProperty(property),
+            availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
+                start: start,
+                stop: stop
+            })])
+        });
+
+        let matrix3Scratch = new Cesium.Matrix3();
+        let positionScratch = new Cesium.Cartesian3();
+        let orientationScratch = new Cesium.Quaternion();
+
+        function getModelMatrix(entity, time, result) {
+            let position = Cesium.Property.getValueOrUndefined(entity.position, time, positionScratch);
+            if (!Cesium.defined(position)) {
+                return undefined;
+            }
+            let orientation = Cesium.Property.getValueOrUndefined(entity.orientation, time, orientationScratch);
+            if (!Cesium.defined(orientation)) {
+                result = Cesium.Transforms.eastNorthUpToFixedFrame(position, undefined, result);
+            } else {
+                result = Cesium.Matrix4.fromRotationTranslation(Cesium.Matrix3.fromQuaternion(orientation, matrix3Scratch), position, result);
+            }
+            return result;
+        }
+
+        let scratch = new Cesium.Matrix4();
+        let camera = viewer.scene.camera;
+        viewer.scene.preRender.addEventListener(function () {
+            getModelMatrix(entity, viewer.clock.currentTime, scratch);
+            camera.lookAtTransform(scratch, new Cesium.Cartesian3(-500, 0, 10000));
+        });
+
+        //Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</body>
+</html>

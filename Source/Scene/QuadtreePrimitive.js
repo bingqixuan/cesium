@@ -111,8 +111,9 @@ define([
 
         /**
          * Gets or sets the maximum screen-space error, in pixels, that is allowed.
-         * A higher maximum error will render fewer tiles and improve performance, while a lower
-         * value will improve visual quality.
+         * 获取或设置允许的最大屏幕空间错误(以像素为单位)。
+         * A higher maximum error will render fewer tiles and improve performance, while a lower value will improve visual quality.
+         * 较高的最大误差将呈现更少的贴图并提高性能，而较低的值将提高视觉质量。
          * @type {Number}
          * @default 2
          */

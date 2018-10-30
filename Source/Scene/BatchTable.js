@@ -40,6 +40,7 @@ define([
 
     /**
      * Creates a texture to look up per instance attributes for batched primitives. For example, store each primitive's pick color in the texture.
+     * 创建一个纹理来查找批处理原语的每个实例属性。例如，将每个原语的pick颜色存储在纹理中。
      *
      * @alias BatchTable
      * @constructor

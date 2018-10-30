@@ -465,6 +465,7 @@ define([
      * 在执行集合中的后处理流程阶段之前调用。调用每个阶段的更新并创建WebGL资源。
      *
      * @param {Context} context The context.
+     * @param {Boolean} useLogDepth Whether the scene uses a logarithmic depth buffer.
      *
      * @private
      */
@@ -622,6 +623,7 @@ define([
      * @param {Context} context The context.
      * @param {Texture} colorTexture The color texture rendered to by the scene.
      * @param {Texture} depthTexture The depth texture written to by the scene.
+     * @param {Texture} idTexture The id texture written to by the scene.
      *
      * @private
      */

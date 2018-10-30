@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>穿梭线</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<script id="cesium_sandcastle_script">
+    function startup(Cesium) {
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            baseLayerPicker: true,
+            animation: true,
+            timeline: true
+        });
+
+        let path = '104.103384,30.617937;104.102745,30.617945;104.102472,30.617942;104.102400,30.617990;104.102349,30.618327;104.102242,30.618658;104.102118,30.619335;104.102298,30.620267;104.103147,30.621209;104.104065,30.622161;104.104673,30.622709;104.104821,30.623027;104.104060,30.623766;104.102913,30.624498;104.102621,30.624691;104.102606,30.624717;104.102148,30.625021;104.101349,30.625561;104.100950,30.625831;104.100839,30.625894;104.100418,30.626127;104.099804,30.626475;104.098769,30.627083;104.097842,30.627686;104.097346,30.628010;104.097049,30.628207;104.096718,30.628407;104.095886,30.628977;104.095281,30.629357;104.094897,30.630130;104.094499,30.631429;104.093788,30.632909;104.093396,30.634116;104.093139,30.635208;104.093102,30.635346;104.093101,30.635354;104.093097,30.635386;104.093082,30.635408;104.092964,30.635729;104.092728,30.636309;104.092368,30.637063;104.091767,30.637984;104.091260,30.638659;104.090486,30.639563;104.090004,30.640065;104.089393,30.640748;104.088873,30.641267;104.088661,30.641471;104.088231,30.641688;104.087427,30.641974;104.086758,30.642174;104.085418,30.642619;104.084053,30.643104;104.083319,30.643369;104.083304,30.643364;104.083295,30.643362;104.083287,30.643382;104.083107,30.643493;104.082408,30.643700;104.081504,30.644189;104.080808,30.644589;104.080018,30.645042;104.079599,30.645289;104.079337,30.645449;104.079061,30.645623;104.078667,30.645809;104.078314,30.645927;104.078058,30.645999;104.077652,30.646087;104.077527,30.646120;104.077487,30.646123;104.076982,30.646182;104.076739,30.646191;104.076714,30.646190;104.076634,30.646203;104.076591,30.646211;104.076581,30.646218;104.076533,30.646216;104.076423,30.646232;104.076381,30.646244;104.076389,30.646250;104.076387,30.646250;104.076386,30.646254;104.076360,30.646265;104.076193,30.646300;104.076099,30.646323;104.076007,30.646323;104.075754,30.646379;104.075596,30.646439;104.075495,30.646443;104.075451,30.646437;104.075252,30.646461;104.075101,30.646453;104.075133,30.646077;104.074921,30.646081;104.074708,30.646252;104.074491,30.646341;104.074471,30.646384;104.074316,30.646401;104.074230,30.646439;104.074218,30.646454;104.074169,30.646469;104.073939,30.646492;104.073959,30.646496;104.073916,30.646497;104.073811,30.646506;104.073753,30.646526;104.073578,30.646550;104.073480,30.646568;104.073451,30.646571;104.073441,30.646554;104.073370,30.646554;104.073335,30.646558;104.073165,30.646571;104.072862,30.646597;104.072558,30.646606;104.072391,30.646604;104.072242,30.646726;104.072161,30.647289;104.072184,30.647858;104.072334,30.648537;104.072076,30.648788;104.071424,30.648837;104.070357,30.648706;104.069144,30.648578;104.068359,30.648813;104.067625,30.649078;104.067398,30.649097;104.067329,30.649149;104.067061,30.649175;104.066837,30.649210;104.066732,30.649361;104.066952,30.649730;104.067413,30.650379;104.067845,30.651079;104.068449,30.652074;104.068914,30.652695;104.069621,30.653566;104.070165,30.654271;104.070230,30.654371;104.070387,30.654457;104.070387,30.654457';
+
+        let pathArray = path.split(";");
+        let positions = [];
+        for (let i = 0, length = pathArray.length; i < length; i++) {
+            let lonlat = pathArray[i].split(',');
+            positions.push(parseFloat(lonlat[0]));
+            positions.push(parseFloat(lonlat[1]));
+        }
+
+        let fadedLine = new Cesium.StripeMaterialProperty({
+//        evenColor : Cesium.Color.PURPLE,
+            evenColor: new Cesium.Color(0, 0, 0.8, 1),
+//        oddColor : Cesium.Color.WHITE,
+            oddColor: new Cesium.Color(0.8, 0.8, 0.8, 0.2),
+            repeat: 1,
+            offset: 0.2,
+            orientation: Cesium.StripeOrientation.VERTICAL
+        });
+
+        //模拟数据推送
+        let paths = [];
+        let count = 0;
+        let entity;
+        setInterval(function getRoute() {
+            if (positions.length === count) {
+                clearInterval(getRoute);
+                return;
+            }
+            if (paths.length > 4) {
+                paths.shift();
+            }
+            paths.push(Cesium.Cartesian3.fromDegrees(positions[count], positions[count + 1]));
+            count += 2;
+            if (paths.length === 2) {
+                entity = viewer.entities.add({
+                    name: 'test',
+                    polyline: {
+                        material: fadedLine,
+                        width: 1,
+                        positions: new Cesium.CallbackProperty(function () {
+                            return paths;
+                        }, false)
+                    }
+                });
+                viewer.zoomTo(entity);
+            }
+        }, 100);
+
+//Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+
+
+</script>
+</body>
+</html>

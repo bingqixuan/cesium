@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>不知啥时候的例子</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<script id="cesium_sandcastle_script">
+    function startup(Cesium) {
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            baseLayerPicker: true,
+            animation: true,
+            timeline: true,
+        });
+
+        var position = Cesium.Cartesian3.fromDegrees(111.58259, 16.54497, 20);
+        var heading = Cesium.Math.toRadians(135);
+        var pitch = 0;
+        var roll = 0;
+        var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+        var orientation = Cesium.Transforms.headingPitchRollQuaternion(position, hpr);
+        var rader = viewer.entities.add({
+            position: position,
+            orientation: orientation,
+            model: {
+                uri: '../../SampleData/models/Radar/radar.gltf',
+                //minimumPixelSize: 128,
+                minimumPixelSize: 128,
+                maximumScale: 3182
+            },
+            path: {
+                leadTime: 0,
+                trailTime: 60,
+                resolution: 1,
+
+                material: new Cesium.PolylineOutlineMaterialProperty({
+                    color: Cesium.Color.CHARTREUSE,
+                    outlineColor: Cesium.Color.BROWN,
+                    outlineWidth: 5,
+                    width: 4
+                }),
+                width: 4,
+                show: true
+            }
+        });
+
+        var position2 = Cesium.Cartesian3.fromDegrees(111.58259, 16.54497, 20000);
+        var entity = viewer.entities.add({
+            position: position,
+            cylinder: {
+                length: 20000.0,
+                topRadius: 68000,
+                bottomRadius: 68000,
+                material: Cesium.Color.RED.withAlpha(0.1),
+                numberOfVerticalLines: 360,
+                outline: true,
+                outlineColor: Cesium.Color.RED
+            }
+        });
+        raderBeam();
+
+        function raderBeam() {
+//        var position = Cesium.Cartesian3.fromDegrees(111.58259, 16.54497, 20);
+//        var heading = 0;
+//        var pitch = 0;
+//        var roll = 0;
+
+
+            var r = 6378137.0;
+            var lat = 16.54497;
+            var lng = 111.58259;
+            var minheight = 0;
+            var maxheight = 20000;
+            var length = maxheight - minheight;
+            var r1 = 68000;
+            var r2 = 68000;
+            var center1 = Cesium.Cartesian3.fromDegrees(lng, lat, minheight);
+            var length1 = length + r - Math.sqrt(r * r - r1 * r1);
+            var center2 = Cesium.Cartesian3.fromDegrees(lng, lat, length1);
+
+            var unitPosScratch = new Cesium.Cartesian3();
+            var eastVecScratch = new Cesium.Cartesian3();
+            var northVecScratch = new Cesium.Cartesian3();
+            var rotAxis = new Cesium.Cartesian3();
+            var tempVec = new Cesium.Cartesian3();
+            var unitQuat = new Cesium.Quaternion();
+            var rotMtx = new Cesium.Matrix3();
+
+            function pointOnEllipsoid(theta, northVec, eastVec, aSqr, ab, bSqr, mag, unitPos, result) {
+                var azimuth = theta;
+                Cesium.Cartesian3.multiplyByScalar(eastVec, Math.cos(azimuth), rotAxis);
+                Cesium.Cartesian3.multiplyByScalar(northVec, Math.sin(azimuth), tempVec);
+                Cesium.Cartesian3.add(rotAxis, tempVec, rotAxis);
+
+                var cosThetaSquared = Math.cos(theta);
+                cosThetaSquared = cosThetaSquared * cosThetaSquared;
+
+                var sinThetaSquared = Math.sin(theta);
+                sinThetaSquared = sinThetaSquared * sinThetaSquared;
+
+                var radius = ab / Math.sqrt(bSqr * cosThetaSquared + aSqr * sinThetaSquared);
+                var angle = radius / mag;
+
+                // Create the quaternion to rotate the position vector to the boundary of the ellipse.
+                Cesium.Quaternion.fromAxisAngle(rotAxis, angle, unitQuat);
+                Cesium.Matrix3.fromQuaternion(unitQuat, rotMtx);
+
+                Cesium.Matrix3.multiplyByVector(rotMtx, unitPos, result);
+                Cesium.Cartesian3.normalize(result, result);
+                Cesium.Cartesian3.multiplyByScalar(result, mag, result);
+                return result;
+            }
+
+            function getPosition(theta, center, rii) {
+                //console.log("position:("+center.x+","+center.y+","+center.z+")")
+                var mag = Cesium.Cartesian3.magnitude(center);
+                //  console.log("mag:"+mag)
+                var raSqr = rii * rii;
+                var unitPos = Cesium.Cartesian3.normalize(center, unitPosScratch);
+                var eastVec = Cesium.Cartesian3.cross(Cesium.Cartesian3.UNIT_Z, center, eastVecScratch);
+                eastVec = Cesium.Cartesian3.normalize(eastVec, eastVec);
+
+                var northVec = Cesium.Cartesian3.cross(unitPos, eastVec, northVecScratch);
+
+                var position = new Cesium.Cartesian3();
+                position = pointOnEllipsoid(theta, northVec, eastVec, raSqr, raSqr, raSqr, mag, unitPos, position);
+                //console.log("position:("+position.x+","+position.y+","+position.z+")")
+                return position;
+            }
+
+            //计算波束
+            //c1:圆台底面中心坐标
+            //c2:圆台顶面中心坐标
+            //r1:圆台底面半径
+            //r2:圆台顶面半径
+            //det:圆分割大小  旋转一度所用时间
+            //start  起始时间
+            //interval  持续时间s
+            //total 圆分割数
+            function computeCirclularFlight(c1, c2, r1, r2, start, interval, det, total, dataSource) {
+                var ot = total * det;
+                var n = interval / ot;
+                var rand = Math.floor(Math.random() * total);
+                for (var i = 0; i < total; i++) {
+                    var intervalCollect = new Cesium.TimeIntervalCollection()
+                    for (var j = 0; j < n; j++) {
+                        var t1 = Cesium.JulianDate.addSeconds(start, ot * j + i * det, new Cesium.JulianDate());
+                        var t2 = Cesium.JulianDate.addSeconds(start, ot * j + (i + 1) * det, new Cesium.JulianDate());
+                        intervalCollect.addInterval(new Cesium.TimeInterval({
+                            start: t1,
+                            stop: t2,
+                            isStartIncluded: true,
+                            isStopIncluded: false
+                        }))
+                    }
+
+                    var theta = (2 * Math.PI / total * ((i + rand) % total))
+
+                    dataSource.entities.add({
+                        availability: intervalCollect,
+                        polygon: {
+                            hierarchy: new Cesium.PolygonHierarchy([c1,
+                                getPosition(theta, c1, r1),
+                                getPosition(theta, c2, r2)
+                            ]),
+                            perPositionHeight: true,
+                            material: Cesium.Color.RED,
+                            outline: true,
+                            outlineWidth: 10,
+                            outlineColor: Cesium.Color.RED
+                        }
+                    });
+                }
+            }
+
+            //computeCirclularFlight(center1, center2, r1, r2, viewer.clock.currentTime, 10000, 0.043, 60, viewer);
+            computeCirclularFlight(center1, center2, r1, r2, viewer.clock.currentTime, 84000, 3, 60, viewer);
+        }
+
+        //Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<script id="cesium_sandcastle_script">
+    function startup(Cesium) {
+        'use strict';
+//Sandcastle_Begin
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            infoBox : false,
+            selectionIndicator : false
+        });
+
+        var terrainProvider = Cesium.createWorldTerrain();
+        var location = {
+            centerLatitude: 0.6587902522,
+            centerLongitude: -2.0862479628,
+            height: 2662.6140725482123
+        };
+        var positions = [new Cesium.Cartographic(location.centerLongitude, location.centerLatitude)];
+        viewer.scene.globe.terrainProvider = terrainProvider;
+        var promise = Cesium.sampleTerrain(terrainProvider, 11, positions);
+        Cesium.when(promise, function(updatedPositions) {
+            location.height = updatedPositions[0].height + 50.0;
+            updateModels();
+
+            var viewshed = new Cesium.ViewShed({
+                scene: viewer.scene
+            });
+            var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+            handler.setInputAction(function(click) {
+                var cartesian = viewer.scene.pickPosition(click.position);
+//            let cartesian = viewer.scene.globe.pick(viewer.scene.camera.getPickRay(click.position), viewer.scene);
+                if (cartesian) {
+                    viewshed.setViewPosition(cartesian);
+                }
+
+                handler.setInputAction(function(click) {
+                    var cartesian = viewer.scene.pickPosition(click.position);
+//                let cartesian = viewer.scene.globe.pick(viewer.scene.camera.getPickRay(click.position), viewer.scene);
+                    if (cartesian) {
+                        viewshed.setTargetPosition(cartesian);
+                    }
+                    handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+                }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        });
+
+        var scene = viewer.scene;
+
+        function updateModels() {
+            scene.primitives.removeAll();
+
+            var centerLongitude = location.centerLongitude;
+            var centerLatitude = location.centerLatitude;
+            var height = location.height;
+            var modelPosition = Cesium.Cartesian3.fromRadians(centerLongitude, centerLatitude, height);
+            viewer.scene.camera.lookAt(modelPosition, new Cesium.Cartesian3(25.0, 25.0, 30.0));
+
+            var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(modelPosition, new Cesium.HeadingPitchRoll());
+            var model = scene.primitives.add(Cesium.Model.fromGltf({
+                url : '../../SampleData/models/CesiumAir/Cesium_Air.glb',
+                modelMatrix : modelMatrix
+            }));
+
+            model.readyPromise.then(function(model) {
+                // Play and loop all animations at half-speed
+                model.activeAnimations.addAll({
+                    speedup : 0.5,
+                    loop : Cesium.ModelAnimationLoop.REPEAT
+                });
+            }).otherwise(function(error){
+                window.alert(error);
+            });
+
+            var position1 = Cesium.Cartesian3.fromRadians(centerLongitude, centerLatitude, height + 5.0);
+            var position3 = Cesium.Cartesian3.fromRadians(centerLongitude, centerLatitude, height + 15.0);
+            createBox(position3);
+            createSphere(position1);
+        }
+        function createBox(origin) {
+            var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, new Cesium.HeadingPitchRoll());
+
+            var box = new Cesium.Primitive({
+                geometryInstances : new Cesium.GeometryInstance({
+                    geometry : Cesium.BoxGeometry.fromDimensions({
+                        dimensions : new Cesium.Cartesian3(0.5, 0.5, 0.5),
+                        vertexFormat : Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
+                    }),
+                    modelMatrix : modelMatrix,
+                    attributes : {
+                        color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.BLUE)
+                    }
+                }),
+                appearance : new Cesium.PerInstanceColorAppearance({
+                    translucent : false,
+                    closed : true
+                }),
+                asynchronous : false,
+                shadows : Cesium.ShadowMode.ENABLED
+            });
+
+            scene.primitives.add(box);
+        }
+
+        function createSphere(origin) {
+            var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, new Cesium.HeadingPitchRoll());
+
+            var sphere = new Cesium.Primitive({
+                geometryInstances : new Cesium.GeometryInstance({
+                    geometry : new Cesium.SphereGeometry({
+                        radius : 2.0,
+                        vertexFormat : Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
+                    }),
+                    modelMatrix : modelMatrix,
+                    attributes : {
+                        color : Cesium.ColorGeometryInstanceAttribute.fromColor(new Cesium.Color(1.0, 0.0, 0.0, 0.5))
+                    }
+                }),
+                appearance : new Cesium.PerInstanceColorAppearance({
+                    translucent : true,
+                    closed : true
+                }),
+                asynchronous : false,
+                shadows : Cesium.ShadowMode.ENABLED
+            });
+
+            scene.primitives.add(sphere);
+        }
+
+
+//Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</body>
+</html>

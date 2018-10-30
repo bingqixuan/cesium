@@ -850,6 +850,7 @@ define([
      * A function that will be called before execute. Used to create WebGL resources and load any textures.
      * 在执行命令之前被调用的函数。用于创建WebGL资源和加载任何纹理。
      * @param {Context} context The context.
+     * @param {Boolean} useLogDepth Whether the scene uses a logarithmic depth buffer.
      * @private
      */
     PostProcessStage.prototype.update = function(context, useLogDepth) {
@@ -911,6 +912,7 @@ define([
      * @param {Context} context The context.
      * @param {Texture} colorTexture The input color texture.
      * @param {Texture} depthTexture The input depth texture.
+     * @param {Texture} idTexture The id texture.
      * @private
      */
     PostProcessStage.prototype.execute = function(context, colorTexture, depthTexture, idTexture) {

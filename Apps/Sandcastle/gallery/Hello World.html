@@ -28,6 +28,15 @@ function startup(Cesium) {
     'use strict';
 //Sandcastle_Begin
 var viewer = new Cesium.Viewer('cesiumContainer');
+
+    var tileset = new Cesium.Cesium3DTileset({ url: "http://192.168.3.216:8080/Scene/Production_1.json"});
+
+    tileset.readyPromise.then(function(tileset) {
+        viewer.scene.primitives.add(tileset);
+        viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0.5, -0.2, tileset.boundingSphere.radius * 4.0));
+    }).otherwise(function(error) {
+        console.log(error);
+    });
 //Sandcastle_End
     Sandcastle.finishedLoading();
 }
