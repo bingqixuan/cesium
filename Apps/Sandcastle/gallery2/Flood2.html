@@ -52,11 +52,11 @@
         window.Cesium = Cesium;
         viewer = new Cesium.Viewer('cesiumContainer', {
             // Use Cesium World Terrain
-            imageryProvider: Cesium.createTileMapServiceImageryProvider({
-                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
-            }),
-            baseLayerPicker: false,
-            terrainProvider: Cesium.createWorldTerrain()
+//            imageryProvider: Cesium.createTileMapServiceImageryProvider({
+//                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+//            }),
+//            baseLayerPicker: false,
+//            terrainProvider: Cesium.createWorldTerrain()
         });
 
 
@@ -64,10 +64,14 @@
 //        var tileset = new Cesium.Cesium3DTileset({
 //            url: Cesium.IonResource.fromAssetId(5712)
 //        });
-        var tileset = new Cesium.Cesium3DTileset({ url: Cesium.IonResource.fromAssetId(5743) });
-
+        var tileset = new Cesium.Cesium3DTileset({ url: Cesium.IonResource.fromAssetId(6074) });
         viewer.scene.primitives.add(tileset);
-        viewer.zoomTo(tileset);
+
+        tileset.readyPromise.then(function(){
+            var boundingSphere = tileset.boundingSphere;
+            viewer.camera.viewBoundingSphere(boundingSphere, new Cesium.HeadingPitchRange(0.0, -0.5, boundingSphere.radius + 500.0));
+            viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+        });
 //        Sandcastle.finishedLoading();
 //
 //        return;
