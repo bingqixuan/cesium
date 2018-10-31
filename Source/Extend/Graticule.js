@@ -224,9 +224,9 @@ define([
         var latMesh = new Mesh();
         latMesh._vertexs = new Float32Array(iSizeX * iSizeY * 3);
         latMesh._indices = new Uint16Array((iSizeX - 1) * 2 * iSizeY);
-        for (let iy = 0; iy < iSizeY; ++iy) {
+        for (var iy = 0; iy < iSizeY; ++iy) {
             geoPos.y = dStartLat + iy * dIntervalY;
-            for (let ix = 0; ix < iSizeX; ++ix) {
+            for (var ix = 0; ix < iSizeX; ++ix) {
                 geoPos.x = dStartLon + ix * dIntervalX;
                 latMesh._vertexs[iVByteIndex++] = geoPos.x;
                 latMesh._vertexs[iVByteIndex++] = geoPos.y;
@@ -250,9 +250,9 @@ define([
         var lonMesh = new Mesh();
         lonMesh._vertexs = new Float32Array(iTempSizeX * iSizeY * 3);
         lonMesh._indices = new Uint16Array((iSizeY - 1) * 2 * iTempSizeX);
-        for (let ix = 0; ix < iTempSizeX; ++ix) {
+        for (var ix = 0; ix < iTempSizeX; ++ix) {
             geoPos.x = dStartLon + ix * dIntervalX;
-            for (let iy = 0; iy < iSizeY; ++iy) {
+            for (var iy = 0; iy < iSizeY; ++iy) {
                 geoPos.y = dStartLat + iy * dIntervalY;
                 lonMesh._vertexs[iVByteIndex++] = geoPos.x;
                 lonMesh._vertexs[iVByteIndex++] = geoPos.y;

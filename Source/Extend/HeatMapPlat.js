@@ -92,63 +92,61 @@ define([
         // this.colorTexture.copyFrom(this.colorRamp);
 
 
-        var vs = `attribute vec3 position3DHigh; 
-attribute vec3 position3DLow;
-attribute vec3 normal;
-attribute vec2 st;
-attribute float batchId;
-
-varying vec3 v_positionEC;
-varying vec3 v_normalEC;
-varying vec2 v_st;
-
-void main()
-{
-    vec4 p = czm_computePosition();
-
-    v_positionEC = (czm_modelViewRelativeToEye * p).xyz;      // position in eye coordinates
-    v_normalEC = czm_normal * normal;                         // normal in eye coordinates
-    v_st = st;
-    v_st = vec2(st.y,st.x);
-
-    gl_Position = czm_modelViewProjectionRelativeToEye * p;
-}`;
-        var fs = `
-varying vec3 v_positionEC;
-varying vec3 v_normalEC;
-varying vec2 v_st;
-
-void main()
-{
-    vec3 positionToEyeEC = -v_positionEC;
-
-    vec3 normalEC = normalize(v_normalEC);;
-#ifdef FACE_FORWARD
-    normalEC = faceforward(normalEC, vec3(0.0, 0.0, 1.0), -normalEC);
-#endif
-
-    czm_materialInput materialInput;
-    materialInput.normalEC = normalEC;
-    materialInput.positionToEyeEC = positionToEyeEC;
-    materialInput.st = v_st;
-    czm_material material = czm_getMaterial(materialInput);
-
-    float coordX = 0.5;
-    if(length(positionToEyeEC) > 10000000.0){
-        coordX = 0.99;
-    }else{ 
-        coordX = length(positionToEyeEC) / 10000000.0;
-    }
-    vec4 color2 = texture2D(u_colorRamp_0, vec2(coordX, 0.5));
-    gl_FragColor = vec4(color2.xyz, 1.0);
+        var vs = "attribute vec3 position3DHigh; " +
+            "attribute vec3 position3DLow;" +
+            "attribute vec3 normal;" +
+            "attribute vec2 st;" +
+            "attribute float batchId;" +
+            "" +
+            "varying vec3 v_positionEC;" +
+            "varying vec3 v_normalEC;" +
+            "varying vec2 v_st;" +
+            "" +
+            "void main()" +
+            "{" +
+            "vec4 p = czm_computePosition();" +
+            "" +
+            "v_positionEC = (czm_modelViewRelativeToEye * p).xyz;" +      // position in eye coordinates
+            "v_normalEC = czm_normal * normal;" +                         // normal in eye coordinates
+            "v_st = st;" +
+            "v_st = vec2(st.y,st.x);" +
+            "gl_Position = czm_modelViewProjectionRelativeToEye * p;" +
+            "};"
+        var fs =
+            "varying vec3 v_positionEC;" +
+            "varying vec3 v_normalEC;" +
+            "varying vec2 v_st;" +
+            "" +
+            "void main()" +
+            "{" +
+            "vec3 positionToEyeEC = -v_positionEC;" +
+            "" +
+            "vec3 normalEC = normalize(v_normalEC);" +
+            "#ifdef FACE_FORWARD" +
+            "normalEC = faceforward(normalEC, vec3(0.0, 0.0, 1.0), -normalEC);" +
+            "#endif" +
+            "" +
+            "czm_materialInput materialInput;" +
+            "materialInput.normalEC = normalEC;" +
+            "materialInput.positionToEyeEC = positionToEyeEC;" +
+            "materialInput.st = v_st;" +
+            "czm_material material = czm_getMaterial(materialInput);" +
+            "" +
+            "float coordX = 0.5;" +
+            "if(length(positionToEyeEC) > 10000000.0){" +
+            "coordX = 0.99;" +
+            "}else{ " +
+            "coordX = length(positionToEyeEC) / 10000000.0;" +
+            "}" +
+            "vec4 color2 = texture2D(u_colorRamp_0, vec2(coordX, 0.5));" +
+            "gl_FragColor = vec4(color2.xyz, 1.0);" +
 // #ifdef FLAT
 //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 //    gl_FragColor = vec4(material.diffuse + material.emission, material.alpha);
 // #else
 //     gl_FragColor = czm_phong(normalize(positionToEyeEC), material);
 // #endif
-}
-`;
+            "}";
         // var fs =
         //     // 'uniform sampler2D u_colorRamp; \n' +
         //     // 'uniform float u_cameraHeight; \n' +
@@ -170,7 +168,7 @@ void main()
             strict: false,
             translucent: true,
             fabric: {
-                uniforms:{
+                uniforms: {
                     u_colorRamp: this.colorRamp
                 },
             },
