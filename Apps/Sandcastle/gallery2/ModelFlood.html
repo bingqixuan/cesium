@@ -27,17 +27,9 @@
     <table>
         <tbody>
         <tr>
-            <td>Alpha</td>
-            <td>
-                <input type="range" min="0.0" max="1.0" step="0.02" data-bind="value: alpha, valueUpdate: 'input'">
-                <input type="text" size="5" data-bind="value: alpha">
-            </td>
-        </tr>
-        <tr>
             <td>Height</td>
             <td>
-                <!--<input type="range" min="5" max="5000" step="10" data-bind="value: height, valueUpdate: 'input'">-->
-                <input type="range" min="10.0" max="100.0" step="1" data-bind="value: height, valueUpdate: 'input'">
+                <input type="range" min="70.0" max="100.0" step="1" data-bind="value: height, valueUpdate: 'input'">
                 <input type="text" size="5" data-bind="value: height">
             </td>
         </tr>
@@ -51,19 +43,11 @@
 //Sandcastle_Begin
         window.Cesium = Cesium;
         viewer = new Cesium.Viewer('cesiumContainer', {
-            // Use Cesium World Terrain
-//            imageryProvider: Cesium.createTileMapServiceImageryProvider({
-//                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
-//            }),
-//            baseLayerPicker: false,
-//            terrainProvider: Cesium.createWorldTerrain()
+            terrainProvider: Cesium.createWorldTerrain()
         });
 
 
         viewer.scene.globe.depthTestAgainstTerrain = true;
-        var tileset = new Cesium.Cesium3DTileset({
-            url: Cesium.IonResource.fromAssetId(5712)
-        });
         var tileset = new Cesium.Cesium3DTileset({ url: Cesium.IonResource.fromAssetId(6074) });
         viewer.scene.primitives.add(tileset);
 
@@ -72,16 +56,11 @@
             viewer.camera.viewBoundingSphere(boundingSphere, new Cesium.HeadingPitchRange(0.0, -0.5, boundingSphere.radius + 500.0));
             viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
         });
-//        Sandcastle.finishedLoading();
-//
-//        return;
-
-
         viewer.scene.context.uniformState.gltf_enableCarto = true;
 // The viewModel tracks the state of our mini application.
         var viewModel = {
             alpha: 0.3,
-            height: 3000
+            height: 100
         };
         Cesium.knockout.track(viewModel);
 
@@ -94,10 +73,6 @@
                 viewer.scene.frameState.context.uniformState['gltf_height'] = parseFloat(newValue);
             }
         );
-
-
-
-//Sandcastle_End
         Sandcastle.finishedLoading();
     }
     if (typeof Cesium !== "undefined") {
