@@ -462,7 +462,7 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
 
         // Selection Indicator
         var selectionIndicator;
-        if (!defined(options.selectionIndicator) || options.selectionIndicator !== false) {
+        if (defined(options.selectionIndicator) && options.selectionIndicator !== false) {
             var selectionIndicatorContainer = document.createElement('div');
             selectionIndicatorContainer.className = 'cesium-viewer-selectionIndicatorContainer';
             viewerContainer.appendChild(selectionIndicatorContainer);
@@ -471,7 +471,7 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
 
         // Info Box
         var infoBox;
-        if (!defined(options.infoBox) || options.infoBox !== false) {
+        if (defined(options.infoBox) && options.infoBox !== false) {
             var infoBoxContainer = document.createElement('div');
             infoBoxContainer.className = 'cesium-viewer-infoBoxContainer';
             viewerContainer.appendChild(infoBoxContainer);
@@ -489,7 +489,7 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
 
         // Geocoder
         var geocoder;
-        if (!defined(options.geocoder) || options.geocoder !== false) {
+        if (defined(options.geocoder) && options.geocoder !== false) {
             var geocoderContainer = document.createElement('div');
             geocoderContainer.className = 'cesium-viewer-geocoderContainer';
             toolbar.appendChild(geocoderContainer);
@@ -508,7 +508,7 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
 
         // HomeButton
         var homeButton;
-        if (!defined(options.homeButton) || options.homeButton !== false) {
+        if (defined(options.homeButton) && options.homeButton !== false) {
             homeButton = new HomeButton(toolbar, scene);
             if (defined(geocoder)) {
                 eventHelper.add(homeButton.viewModel.command.afterExecute, function() {
@@ -533,7 +533,7 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
         //>>includeEnd('debug');
 
         var sceneModePicker;
-        if (!scene3DOnly && (!defined(options.sceneModePicker) || options.sceneModePicker !== false)) {
+        if (!scene3DOnly && (defined(options.sceneModePicker) && options.sceneModePicker !== false)) {
             sceneModePicker = new SceneModePicker(toolbar, scene);
         }
 
@@ -579,7 +579,7 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
 
         // Navigation Help Button
         var navigationHelpButton;
-        if (!defined(options.navigationHelpButton) || options.navigationHelpButton !== false) {
+        if (defined(options.navigationHelpButton) && options.navigationHelpButton !== false) {
             var showNavHelp = true;
             try {
                 //window.localStorage is null if disabled in Firefox or undefined in browsers with implementation
@@ -603,7 +603,7 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
 
         // Animation
         var animation;
-        if (!defined(options.animation) || options.animation !== false) {
+        if (defined(options.animation) && options.animation !== false) {
             var animationContainer = document.createElement('div');
             animationContainer.className = 'cesium-viewer-animationContainer';
             viewerContainer.appendChild(animationContainer);
@@ -612,7 +612,7 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
 
         // Timeline
         var timeline;
-        if (!defined(options.timeline) || options.timeline !== false) {
+        if (defined(options.timeline) && options.timeline !== false) {
             var timelineContainer = document.createElement('div');
             timelineContainer.className = 'cesium-viewer-timelineContainer';
             viewerContainer.appendChild(timelineContainer);

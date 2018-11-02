@@ -499,8 +499,8 @@ define([
     var defaultCredit;
     function getDefaultCredit() {
         if (!defined(defaultCredit)) {
-            var logo = buildModuleUrl('Assets/Images/ion-credit.png');
-            defaultCredit = new Credit('<a href="https://cesium.com/" target="_blank"><img src="' + logo + '" title="Cesium ion"/></a>', true);
+            var logo = buildModuleUrl('Assets/Images/logo.png');
+            defaultCredit = new Credit('<a href="https://bingqixuan.github.io/" target="_blank"><img src="' + logo + '" title="溪衍"/></a>', true);
         }
 
         if (!CreditDisplay._cesiumCreditInitialized) {

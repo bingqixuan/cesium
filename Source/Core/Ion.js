@@ -48,10 +48,7 @@ define([
         }
 
         if (!defined(defaultTokenCredit)) {
-            var defaultTokenMessage = '<b> \
-            This application is using Cesium\'s default ion access token. Please assign <i>Cesium.Ion.defaultAccessToken</i> \
-            with an access token from your ion account before making any Cesium API calls. \
-            You can sign up for a free ion account at <a href="https://cesium.com">https://cesium.com</a>.</b>';
+            var defaultTokenMessage = '';
 
             defaultTokenCredit = new Credit(defaultTokenMessage, true);
         }
