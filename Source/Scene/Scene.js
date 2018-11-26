@@ -53,7 +53,6 @@ define([
         './BrdfLutGenerator',
         './Camera',
 		'./Cesium3DTileFeature',
-		'./Cesium3DTileset',
         './Cesium3DTileset',
         './CreditDisplay',
         './DebugCameraPrimitive',
@@ -67,7 +66,8 @@ define([
         './JobScheduler',
         './MapMode2D',
         './Model',
-        './OIT',        './PerformanceDisplay',
+        './OIT',
+        './PerformanceDisplay',
         './PerInstanceColorAppearance',
         './PickDepth',
         './PostProcessStageCollection',
@@ -149,7 +149,8 @@ define([
         JobScheduler,
         MapMode2D,
         Model,
-        OIT,        PerformanceDisplay,
+        OIT,
+        PerformanceDisplay,
         PerInstanceColorAppearance,
         PickDepth,
         PostProcessStageCollection,
@@ -1998,7 +1999,7 @@ define([
             command.execute(context, passState);
         } else if (defined(derivedCommands.depth)) {
             command = derivedCommands.depth.depthOnlyCommand;
-            command.execute(context, passState); 
+            command.execute(context, passState);
         }
     }
 
