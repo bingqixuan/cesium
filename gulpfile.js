@@ -74,6 +74,16 @@ var filesToClean = ['Source/Cesium.js',
                     'Apps/Sandcastle/gallery/gallery-index.js',
                     'Cesium-*.zip'];
 
+gulp.task('bing', function(done) {
+    mkdirp.sync('Build');
+    glslToJavaScript(minifyShaders, 'Build/minifyShaders.state');
+    createCesiumJs();
+    createSpecList();
+    createGalleryList();
+    createJsHintOptions();
+    done();
+});
+
 var filesToSortRequires = ['Source/**/*.js',
                            '!Source/Shaders/**',
                            '!Source/ThirdParty/**',
@@ -94,12 +104,6 @@ var filesToSortRequires = ['Source/**/*.js',
                            '!Apps/Sandcastle/gallery/gallery-index.js'];
 
 gulp.task('build', function(done) {
-    mkdirp.sync('Build');
-    glslToJavaScript(minifyShaders, 'Build/minifyShaders.state');
-    createCesiumJs();
-    createSpecList();
-    createGalleryList();
-    createJsHintOptions();
     done();
 });
 

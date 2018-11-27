@@ -32,3 +32,4 @@ package-lock.json
 .idea
 /Apps/Sandcastle/development
 /demo
+/plugins
