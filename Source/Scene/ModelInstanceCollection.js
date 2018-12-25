@@ -68,29 +68,31 @@ define([
     };
 
     /**
-     * ä¸€ä¸ª3Dæ¨¡å‹å®ä¾‹é›†åˆã€‚æ‰€æœ‰å®ä¾‹éƒ½å¼•ç”¨ç›¸åŒçš„åº•å±‚æ¨¡å‹ï¼Œä½†æ˜¯æ¯ä¸ªå®ä¾‹éƒ½æœ‰ç‹¬ç‰¹çš„å±æ€§ï¼Œå¦‚æ¨¡å‹çŸ©é˜µã€é€‰æ‹©idç­‰
+     * Ò»¸ö3DÄ£ĞÍÊµÀı¼¯ºÏ¡£ËùÓĞÊµÀı¶¼ÒıÓÃÏàÍ¬µÄµ×²ãÄ£ĞÍ£¬µ«ÊÇÃ¿¸öÊµÀı¶¼ÓĞ¶ÀÌØµÄÊôĞÔ£¬ÈçÄ£ĞÍ¾ØÕó¡¢Ñ¡ÔñidµÈ
      *
-     * å®ä¾‹æ˜¯ç›¸å¯¹äºä¸­å¿ƒå‘ˆç°çš„ï¼Œä¸ºäº†è·å¾—æœ€å¥½çš„ç»“æœï¼Œå®ä¾‹åº”è¯¥å½¼æ­¤é è¿‘ã€‚å¦åˆ™ï¼Œå¦‚æœå®ä¾‹è¢«æ”¾ç½®åœ¨åœ°çƒçš„ä¸¤ç«¯ï¼Œé‚£ä¹ˆå¯èƒ½ä¼šå­˜åœ¨ç²¾åº¦é—®é¢˜ã€‚
+     * ÊµÀıÊÇÏà¶ÔÓÚÖĞĞÄ³ÊÏÖµÄ£¬ÎªÁË»ñµÃ×îºÃµÄ½á¹û£¬ÊµÀıÓ¦¸Ã±Ë´Ë¿¿½ü¡£·ñÔò£¬Èç¹ûÊµÀı±»·ÅÖÃÔÚµØÇòµÄÁ½¶Ë£¬ÄÇÃ´¿ÉÄÜ»á´æÔÚ¾«¶ÈÎÊÌâ¡£
      *
      * @alias ModelInstanceCollection
      * @constructor
      *
      * @param {Object} options Object with the following properties:
-     * @param {Object[]} [options.instances] ä¸€ä¸ªå®ä¾‹æ•°ç»„ï¼Œå…¶ä¸­æ¯ä¸ªå®ä¾‹åŒ…å«ä¸€ä¸ªæ¨¡å‹çŸ©é˜µå’Œå¯é€‰çš„batchIdï¼ˆå¦‚æœoptions.batchTableå®šä¹‰äº†çš„è¯ï¼‰ã€‚
-     * @param {Cesium3DTileBatchTable} [options.batchTable] å®ä¾‹åŒ–çš„3D Tileçš„æ‰¹å¤„ç†è¡¨ã€‚
-     * @param {Resource|String} [options.url] gltfæ–‡ä»¶çš„url.
-     * @param {Object} [options.requestType] è¯·æ±‚ç±»å‹ï¼Œç”¨äºè¯·æ±‚ä¼˜å…ˆçº§ã€‚
-     * @param {Object|ArrayBuffer|Uint8Array} [options.gltf] ä¸€ä¸ªglTF JSONå¯¹è±¡ï¼Œæˆ–è€…ä¸€ä¸ªäºŒè¿›åˆ¶çš„glTF bufferã€‚
-     * @param {Resource|String} [options.basePath=''] glTF JSONä¸­è·¯å¾„ç›¸å¯¹çš„åŸºæœ¬è·¯å¾„ã€‚
-     * @param {Boolean} [options.dynamic=false] æç¤ºå®ä¾‹æ¨¡å‹çŸ©é˜µæ˜¯å¦ä¼šé¢‘ç¹æ›´æ–°ã€‚
-     * @param {Boolean} [options.show=true] ç¡®å®šæ˜¯å¦æ˜¾ç¤ºã€‚
+     * @param {Object[]} [options.instances] Ò»¸öÊµÀıÊı×é£¬ÆäÖĞÃ¿¸öÊµÀı°üº¬Ò»¸öÄ£ĞÍ¾ØÕóºÍ¿ÉÑ¡µÄbatchId£¨Èç¹ûoptions.batchTable¶¨ÒåÁËµÄ»°£©¡£
+     * @param {Cesium3DTileBatchTable} [options.batchTable] ÊµÀı»¯µÄ3D TileµÄÅú´¦Àí±í¡£
+     * @param {Resource|String} [options.url] gltfÎÄ¼şµÄurl.
+     * @param {Object} [options.requestType] ÇëÇóÀàĞÍ£¬ÓÃÓÚÇëÇóÓÅÏÈ¼¶¡£
+     * @param {Object|ArrayBuffer|Uint8Array} [options.gltf] Ò»¸öglTF JSON¶ÔÏó£¬»òÕßÒ»¸ö¶ş½øÖÆµÄglTF buffer¡£
+     * @param {Resource|String} [options.basePath=''] glTF JSONÖĞÂ·¾¶Ïà¶ÔµÄ»ù±¾Â·¾¶¡£
+     * @param {Boolean} [options.dynamic=false] ÌáÊ¾ÊµÀıÄ£ĞÍ¾ØÕóÊÇ·ñ»áÆµ·±¸üĞÂ¡£
+     * @param {Boolean} [options.show=true] È·¶¨ÊÇ·ñÏÔÊ¾¡£
      * @param {Boolean} [options.allowPicking=true] When <code>true</code>, each instance is pickable with {@link Scene#pick}.
-     * @param {Boolean} [options.asynchronous=true] ç¡®å®šæ¨¡å‹çš„WebGLèµ„æºåˆ›å»ºæ˜¯å¦ä¼šåˆ†æ•£åˆ°å¤šä¸ªå¸§æˆ–å—ä¸­ï¼Œç›´åˆ°åŠ è½½å®Œæ‰€æœ‰glTFæ–‡ä»¶ä¸ºæ­¢ã€‚
-     * @param {Boolean} [options.incrementallyLoadTextures=true] ç¡®å®šæ¨¡å‹åŠ è½½åçº¹ç†æ˜¯å¦ä¼šç»§ç»­æµå…¥ã€‚
-     * @param {ShadowMode} [options.shadows=ShadowMode.ENABLED] ç¡®å®šCollectionæ˜¯å¦ä»æ¯ä¸ªå…‰æºæŠ•å°„æˆ–æ¥æ”¶é˜´å½±ã€‚
-     * @param {Boolean} [options.debugShowBoundingVolume=false] ä»…ä¾›è°ƒè¯•ã€‚ä¸ºCollectionç»˜åˆ¶è¾¹ç•Œçƒã€‚
-     * @param {Boolean} [options.debugWireframe=false] ä»…ä¾›è°ƒè¯•ã€‚ç»˜åˆ¶å®ä¾‹çš„çº¿æ¡†ã€‚
-     *
+     * @param {Boolean} [options.asynchronous=true] È·¶¨Ä£ĞÍµÄWebGL×ÊÔ´´´½¨ÊÇ·ñ»á·ÖÉ¢µ½¶à¸öÖ¡»ò¿éÖĞ£¬Ö±µ½¼ÓÔØÍêËùÓĞglTFÎÄ¼şÎªÖ¹¡£
+     * @param {Boolean} [options.incrementallyLoadTextures=true] È·¶¨Ä£ĞÍ¼ÓÔØºóÎÆÀíÊÇ·ñ»á¼ÌĞøÁ÷Èë¡£
+     * @param {ShadowMode} [options.shadows=ShadowMode.ENABLED] È·¶¨CollectionÊÇ·ñ´ÓÃ¿¸ö¹âÔ´Í¶Éä»ò½ÓÊÕÒõÓ°¡£
+ 	 * @param {Cartesian2} [options.imageBasedLightingFactor=new Cartesian2(1.0, 1.0)] Scales the diffuse and specular image-based lighting from the earth, sky, atmosphere and star skybox.
+     * @param {Cartesian3} [options.lightColor] The color and intensity of the sunlight used to shade models.
+     * @param {Number} [options.luminanceAtZenith=1.0] The sun's luminance at the zenith in kilo candela per meter squared to use for this model's procedural environment map.
+     * @param {Cartesian3[]} [options.sphericalHarmonicCoefficients] The third order spherical harmonic coefficients used for the diffuse color of image-based lighting.     * @param {Boolean} [options.debugShowBoundingVolume=false] ½ö¹©µ÷ÊÔ¡£ÎªCollection»æÖÆ±ß½çÇò¡£
+     * @param {Boolean} [options.debugWireframe=false] ½ö¹©µ÷ÊÔ¡£»æÖÆÊµÀıµÄÏß¿ò¡£     *
      * @exception {DeveloperError} Must specify either <options.gltf> or <options.url>, but not both.
      * @exception {DeveloperError} Shader program cannot be optimized for instancing. Parameters cannot have any of the following semantics: MODEL, MODELINVERSE, MODELVIEWINVERSE, MODELVIEWPROJECTIONINVERSE, MODELINVERSETRANSPOSE.
      *
@@ -126,7 +128,7 @@ define([
         this._instances = createInstances(this, options.instances);
 
         // When the model instance collection is backed by an i3dm tile, use its batch table resources to modify the shaders, attributes, and uniform maps.
-        // å½“æ¨¡å‹å®ä¾‹é›†åˆç”±i3dmå—æ”¯æŒæ—¶ï¼Œä½¿ç”¨å®ƒçš„æ‰¹å¤„ç†è¡¨èµ„æºæ¥ä¿®æ”¹ç€è‰²å™¨ã€å±æ€§å’Œç»Ÿä¸€æ˜ å°„ã€‚
+        // µ±Ä£ĞÍÊµÀı¼¯ºÏÓÉi3dm¿éÖ§³ÖÊ±£¬Ê¹ÓÃËüµÄÅú´¦Àí±í×ÊÔ´À´ĞŞ¸Ä×ÅÉ«Æ÷¡¢ÊôĞÔºÍÍ³Ò»Ó³Éä¡£
         this._batchTable = options.batchTable;
 
         this._model = undefined;
@@ -172,6 +174,9 @@ define([
         this._imageBasedLightingFactor = new Cartesian2(1.0, 1.0);
         Cartesian2.clone(options.imageBasedLightingFactor, this._imageBasedLightingFactor);
         this.lightColor = options.lightColor;
+        this.luminanceAtZenith = options.luminanceAtZenith;
+        this.sphericalHarmonicCoefficients = options.sphericalHarmonicCoefficients;
+        this.specularEnvironmentMaps = options.specularEnvironmentMaps;
     }
 
     defineProperties(ModelInstanceCollection.prototype, {
@@ -477,7 +482,7 @@ define([
             bufferData = new Float32Array(instancesLength * vertexSizeInFloats);
         }
         if (collection._dynamic) {
-            // ä¿ç•™ç¼“å†²æ•°æ®ï¼Œè¿™æ ·æˆ‘ä»¬å°±ä¸å¿…åœ¨æ¯å¸§åˆ†é…æ–°çš„å†…å­˜ã€‚
+            // ±£Áô»º³åÊı¾İ£¬ÕâÑùÎÒÃÇ¾Í²»±ØÔÚÃ¿Ö¡·ÖÅäĞÂµÄÄÚ´æ¡£
             collection._vertexBufferTypedArray = bufferData;
         }
 
@@ -599,7 +604,10 @@ define([
             ignoreCommands : true,
             opaquePass : collection._opaquePass,
             imageBasedLightingFactor : collection.imageBasedLightingFactor,
-            lightColor : collection.lightColor
+            lightColor : collection.lightColor,
+            luminanceAtZenith : collection.luminanceAtZenith,
+            sphericalHarmonicCoefficients : collection.sphericalHarmonicCoefficients,
+            specularEnvironmentMaps : collection.specularEnvironmentMaps
         };
 
         if (!usesBatchTable) {
@@ -895,6 +903,9 @@ define([
 
         model.imageBasedLightingFactor = this.imageBasedLightingFactor;
         model.lightColor = this.lightColor;
+        model.luminanceAtZenith = this.luminanceAtZenith;
+        model.sphericalHarmonicCoefficients = this.sphericalHarmonicCoefficients;
+        model.specularEnvironmentMaps = this.specularEnvironmentMaps;
 
         model.update(frameState);
 
