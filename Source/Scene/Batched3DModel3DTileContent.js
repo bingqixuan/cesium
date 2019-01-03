@@ -465,9 +465,8 @@ define([
     Batched3DModel3DTileContent.prototype.update = function(tileset, frameState) {
         var commandStart = frameState.commandList.length;
 
-        // In the PROCESSING state we may be calling update() to move forward
-        // the content's resource loading.  In the READY state, it will
-        // actually generate commands.
+        // In the PROCESSING state we may be calling update() to move forward the content's resource loading.
+        // In the READY state, it will actually generate commands.
         this._batchTable.update(tileset, frameState);
 
         this._contentModelMatrix = Matrix4.multiply(this._tile.computedTransform, this._rtcCenterTransform, this._contentModelMatrix);
