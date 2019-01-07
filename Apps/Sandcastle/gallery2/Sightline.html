@@ -28,13 +28,9 @@
         'use strict';
 //Sandcastle_Begin
         var viewer = new Cesium.Viewer('cesiumContainer', {
-            infoBox : false,
-            selectionIndicator : false,
-            shadows : true,
             imageryProvider : Cesium.createTileMapServiceImageryProvider({
                 url : Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
             }),
-            baseLayerPicker : false,
         });
         var sightline = new Cesium.Sightline({
             scene : viewer.scene,
@@ -47,23 +43,33 @@
 
         viewer.scene.primitives.add(tileset);
         viewer.zoomTo(tileset);
+        alert("左键单击选择第一个点，右键单击选择第二个点");
 
 //        viewer.terrainProvider = new Cesium.CesiumTerrainProvider({
 //            url : '//assets.agi.com/stk-terrain/world',
 //            requestWaterMask : true,
 //            requestVertexNormals : true
 //        });
+
         var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
         handler.setInputAction(function(click) {
             var cartesian = viewer.scene.pickPosition(click.position);
 //            let cartesian = viewer.scene.globe.pick(viewer.scene.camera.getPickRay(click.position), viewer.scene);
             if (cartesian) {
+                viewer.entities.removeAll();
                 sightline.setViewPosition(cartesian);
+                viewer.entities.add({
+                    position: cartesian,
+                    point: {
+                        pixelSize: 10,
+                        color: Cesium.Color.YELLOW
+                    }
+                })
             }
 
 //            handler.setInputAction(function(mouseMove) {
-////                var cartesian = viewer.scene.pickPosition(mouseMove.endPosition);
-//                let cartesian = viewer.scene.globe.pick(viewer.scene.camera.getPickRay(mouseMove.endPosition), viewer.scene);
+//                var cartesian = viewer.scene.pickPosition(mouseMove.endPosition);
+////                let cartesian = viewer.scene.globe.pick(viewer.scene.camera.getPickRay(mouseMove.endPosition), viewer.scene);
 //                if(cartesian){
 //                    sightline.setTargetPosition(cartesian);
 //                }
@@ -74,8 +80,15 @@
 //                let cartesian = viewer.scene.globe.pick(viewer.scene.camera.getPickRay(click.position), viewer.scene);
                 if (cartesian) {
                     sightline.setTargetPosition(cartesian);
+                    viewer.entities.add({
+                        position: cartesian,
+                        point: {
+                            pixelSize: 10,
+                            color: Cesium.Color.YELLOW
+                        }
+                    })
                 }
-                handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+//                handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
             }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 //Sandcastle_End

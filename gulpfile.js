@@ -73,6 +73,7 @@ var filesToClean = ['Source/Cesium.js',
                     'Specs/SpecList.js',
                     'Apps/Sandcastle/jsHintOptions.js',
                     'Apps/Sandcastle/gallery/gallery-index.js',
+                    'Apps/Sandcastle/templates/bucket.css',
                     'Cesium-*.zip'];
 
 gulp.task('bing', function(done) {
@@ -105,7 +106,12 @@ var filesToSortRequires = ['Source/**/*.js',
                            '!Apps/Sandcastle/gallery/gallery-index.js'];
 
 gulp.task('build', function(done) {
-    done();
+    mkdirp.sync('Build');
+    glslToJavaScript(minifyShaders, 'Build/minifyShaders.state');
+    createCesiumJs();
+    createSpecList();
+    createJsHintOptions();
+    createGalleryList(done);
 });
 
 gulp.task('build-watch', function() {
@@ -1121,7 +1127,7 @@ function createSpecList() {
     fs.writeFileSync(path.join('Specs', 'SpecList.js'), contents);
 }
 
-function createGalleryList() {
+function createGalleryList(done) {
     var demoObjects = [];
     var demoJSONs = [];
     var output = path.join('Apps', 'Sandcastle', 'gallery', 'gallery-index.js');
@@ -1190,6 +1196,25 @@ var gallery_demos = [' + demoJSONs.join(', ') + '];\n\
 var has_new_gallery_demos = ' + (newDemos.length > 0 ? 'true;' : 'false;') + '\n';
 
     fs.writeFileSync(output, contents);
+
+    // Compile CSS for Sandcastle
+    var outputFile = path.join('Apps', 'Sandcastle', 'templates', 'bucket.css');
+
+    requirejs.optimize({
+        cssIn : path.join('Apps', 'Sandcastle', 'templates', 'bucketRaw.css'),
+        out : outputFile,
+        waitSeconds : 0
+    }, function() {
+        var data = fs.readFileSync(outputFile); //read existing contents into data
+        var fd = fs.openSync(outputFile, 'w+');
+        var buffer = new Buffer('/* This file is automatically rebuilt by the Cesium build process. */\n');
+
+        fs.writeSync(fd, buffer, 0, buffer.length, 0); //write new data
+        fs.writeSync(fd, data, 0, data.length, buffer.length); //append old data
+
+        fs.close(fd);
+        done();
+    }, done);
 }
 
 function createJsHintOptions() {
@@ -1209,6 +1234,7 @@ var sandcastleJsHintOptions = ' + JSON.stringify(primary, null, 4) + ';\n';
 function buildSandcastle() {
     var appStream = gulp.src([
             'Apps/Sandcastle/**',
+            '!Apps/Sandcastle/standalone.html',
             '!Apps/Sandcastle/images/**',
             '!Apps/Sandcastle/gallery/**.jpg'
         ])
@@ -1232,7 +1258,14 @@ function buildSandcastle() {
         })
         .pipe(gulp.dest('Build/Apps/Sandcastle'));
 
-    return streamToPromise(mergeStream(appStream, imageStream));
+    var standaloneStream = gulp.src([
+        'Apps/Sandcastle/standalone.html'
+        ])
+        .pipe(gulpReplace('../../ThirdParty/requirejs-2.1.20/require.js', '../../../ThirdParty/requirejs-2.1.20/require.js'))
+        .pipe(gulpReplace('Source/Cesium', 'CesiumUnminified'))
+        .pipe(gulp.dest('Build/Apps/Sandcastle'));
+
+    return streamToPromise(mergeStream(appStream, imageStream, standaloneStream));
 }
 
 function buildCesiumViewer() {

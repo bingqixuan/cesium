@@ -93,6 +93,7 @@ define([
         }
         this._scene = options.scene;
         this._scene.sightline = this;
+        this._scene._logDepthBuffer = undefined;
 
         this._visibleColor = defaultValue(options.visibleColor, new Color(0.0, 1.0, 0.0, 1.0));
         this._invisibleColor = defaultValue(options.invisibleColor, new Color(1.0, 0.0, 0.0, 1.0));
@@ -421,6 +422,7 @@ define([
      * 销毁可视分析对象
      */
     Sightline.prototype.destroy = function () {
+        this._scene._logDepthBuffer = this._scene._context.fragmentDepth;
         this._scene.sightline = null;
         this._scene.enableSightline = false;
         this._sightlineTexture.destroy();
