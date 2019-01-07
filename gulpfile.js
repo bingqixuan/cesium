@@ -81,9 +81,9 @@ gulp.task('bing', function(done) {
     glslToJavaScript(minifyShaders, 'Build/minifyShaders.state');
     createCesiumJs();
     createSpecList();
-    createGalleryList();
     createJsHintOptions();
     done();
+    createGalleryList(done);
 });
 
 var filesToSortRequires = ['Source/**/*.js',
@@ -106,12 +106,7 @@ var filesToSortRequires = ['Source/**/*.js',
                            '!Apps/Sandcastle/gallery/gallery-index.js'];
 
 gulp.task('build', function(done) {
-    mkdirp.sync('Build');
-    glslToJavaScript(minifyShaders, 'Build/minifyShaders.state');
-    createCesiumJs();
-    createSpecList();
-    createJsHintOptions();
-    createGalleryList(done);
+    done();
 });
 
 gulp.task('build-watch', function() {
