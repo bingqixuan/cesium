@@ -18,105 +18,138 @@
     </script>
 </head>
 <body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
-
 <style>
     @import url(../templates/bucket.css);
 </style>
 <div id="cesiumContainer" class="fullSize"></div>
 <div id="loadingOverlay"><h1>Loading...</h1></div>
-<div id="toolbar">
-    <table><tbody>
-    <tr>
-        <td>Freeze</td>
-        <td><input type="checkbox" data-bind="checked: freeze"/></td>
-    </tr>
-    <!--<tr>-->
-        <!--<td>Terrain Enabled</td>-->
-        <!--<td><input type="checkbox" data-bind="checked: terrain"/></td>-->
-    <!--</tr>-->
-    </tbody></table>
-</div>
 <script id="cesium_sandcastle_script">
     function startup(Cesium) {
         'use strict';
 //Sandcastle_Begin
         var viewer = new Cesium.Viewer('cesiumContainer', {
             infoBox : false,
-            selectionIndicator : false,
-            terrainProvider: Cesium.createWorldTerrain()
+            selectionIndicator : false
         });
 
-        var position = Cesium.Cartesian3.fromDegrees(-123.0744619, 44.0503706, 5000);
-        var heading = Cesium.Math.toRadians(135);
-        var pitch = 0;
-        var roll = 0;
-        var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
-        var orientation = Cesium.Transforms.headingPitchRollQuaternion(position, hpr);
+        var terrainProvider = Cesium.createWorldTerrain();
+        var location = {
+            centerLatitude: 0.6587902522,
+            centerLongitude: -2.0862479628,
+            height: 2662.6140725482123
+        };
+        var positions = [new Cesium.Cartographic(location.centerLongitude, location.centerLatitude)];
+        viewer.scene.globe.terrainProvider = terrainProvider;
+        var promise = Cesium.sampleTerrain(terrainProvider, 11, positions);
+        Cesium.when(promise, function(updatedPositions) {
+            location.height = updatedPositions[0].height + 50.0;
+            updateModels();
 
-        var entity = viewer.entities.add({
-            name : '../../SampleData/models/CesiumAir/Cesium_Air.glb',
-            position : position,
-            orientation : orientation,
-            model : {
-                uri : '../../SampleData/models/CesiumAir/Cesium_Air.glb',
-                minimumPixelSize : 128,
-                maximumScale : 20000
-            }
+            var viewshed = new Cesium.ViewShed({
+                scene: viewer.scene
+            });
+            var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+            handler.setInputAction(function(click) {
+                var cartesian = viewer.scene.pickPosition(click.position);
+//            let cartesian = viewer.scene.globe.pick(viewer.scene.camera.getPickRay(click.position), viewer.scene);
+                if (cartesian) {
+                    viewshed.setViewPosition(cartesian);
+                }
+
+                handler.setInputAction(function(click) {
+                    var cartesian = viewer.scene.pickPosition(click.position);
+//                let cartesian = viewer.scene.globe.pick(viewer.scene.camera.getPickRay(click.position), viewer.scene);
+                    if (cartesian) {
+                        viewshed.setTargetPosition(cartesian);
+                    }
+                    handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+                }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
         });
 
         var scene = viewer.scene;
-        var globe = scene.globe;
-        var spotLightCamera = new Cesium.Camera(scene);
-        spotLightCamera.frustum.fov = Cesium.Math.PI_OVER_TWO;
-        spotLightCamera.frustum.aspectRatio = 1.0;
-        spotLightCamera.frustum.near = 1.0;
-        spotLightCamera.frustum.far = 500.0;
-        spotLightCamera.lookAt(position, new Cesium.HeadingPitchRange(1.0, -1.0, 1.0));
 
-        spotLightCamera.position = Cesium.Cartesian3.fromDegrees(-120.0744619, 44.0503706, 6000);
+        function updateModels() {
+            scene.primitives.removeAll();
 
+            var centerLongitude = location.centerLongitude;
+            var centerLatitude = location.centerLatitude;
+            var height = location.height;
+            var modelPosition = Cesium.Cartesian3.fromRadians(centerLongitude, centerLatitude, height);
+            viewer.scene.camera.lookAt(modelPosition, new Cesium.Cartesian3(25.0, 25.0, 30.0));
 
-        function freeze2() {
-            scene.shadowMap = new Cesium.ShadowMap({
-                context : scene.context,
-//                lightCamera : spotLightCamera,
-            lightCamera : scene.camera,
-                cascadesEnabled : false
+            var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(modelPosition, new Cesium.HeadingPitchRoll());
+            var model = scene.primitives.add(Cesium.Model.fromGltf({
+                url : '../../SampleData/models/CesiumAir/Cesium_Air.glb',
+                modelMatrix : modelMatrix
+            }));
+
+            model.readyPromise.then(function(model) {
+                // Play and loop all animations at half-speed
+                model.activeAnimations.addAll({
+                    speedup : 0.5,
+                    loop : Cesium.ModelAnimationLoop.REPEAT
+                });
+            }).otherwise(function(error){
+                window.alert(error);
             });
 
-            var shadowMap;
-            shadowMap = scene.shadowMap;
-            shadowMap.debugFreezeFrame = true;
-            // Update render states for when polygon offset values change
-            shadowMap.debugCreateRenderStates();
+            var position1 = Cesium.Cartesian3.fromRadians(centerLongitude, centerLatitude, height + 5.0);
+            var position3 = Cesium.Cartesian3.fromRadians(centerLongitude, centerLatitude, height + 15.0);
+            createBox(position3);
+            createSphere(position1);
+        }
+        function createBox(origin) {
+            var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, new Cesium.HeadingPitchRoll());
 
-            // Force all derived commands to update
-            shadowMap.dirty = true;
+            var box = new Cesium.Primitive({
+                geometryInstances : new Cesium.GeometryInstance({
+                    geometry : Cesium.BoxGeometry.fromDimensions({
+                        dimensions : new Cesium.Cartesian3(0.5, 0.5, 0.5),
+                        vertexFormat : Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
+                    }),
+                    modelMatrix : modelMatrix,
+                    attributes : {
+                        color : Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.BLUE)
+                    }
+                }),
+                appearance : new Cesium.PerInstanceColorAppearance({
+                    translucent : false,
+                    closed : true
+                }),
+                asynchronous : false,
+                shadows : Cesium.ShadowMode.ENABLED
+            });
 
-//            globe.shadows = Cesium.ShadowMode.fromCastReceive(viewModel.terrainCast, viewModel.terrainReceive);
-            globe.shadows = Cesium.ShadowMode.fromCastReceive(true, true);
-
-            shadowMap.enabled = true;
-            shadowMap.debugShow = true;
+            scene.primitives.add(box);
         }
 
-        viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(-123.0744619, 44.0503706, 50000)
-        });
+        function createSphere(origin) {
+            var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, new Cesium.HeadingPitchRoll());
 
-        var viewModel = {
-            freeze: false
-        };
-        Cesium.knockout.track(viewModel);
-        var toolbar = document.getElementById('toolbar');
-        Cesium.knockout.applyBindings(viewModel, toolbar);
-        Cesium.knockout.getObservable(viewModel, 'freeze').subscribe(updateSetting);
+            var sphere = new Cesium.Primitive({
+                geometryInstances : new Cesium.GeometryInstance({
+                    geometry : new Cesium.SphereGeometry({
+                        radius : 2.0,
+                        vertexFormat : Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
+                    }),
+                    modelMatrix : modelMatrix,
+                    attributes : {
+                        color : Cesium.ColorGeometryInstanceAttribute.fromColor(new Cesium.Color(1.0, 0.0, 0.0, 0.5))
+                    }
+                }),
+                appearance : new Cesium.PerInstanceColorAppearance({
+                    translucent : true,
+                    closed : true
+                }),
+                asynchronous : false,
+                shadows : Cesium.ShadowMode.ENABLED
+            });
 
-        function updateSetting() {
-            if(viewModel.freeze){
-                freeze2();
-            }
+            scene.primitives.add(sphere);
         }
+
+
 //Sandcastle_End
         Sandcastle.finishedLoading();
     }

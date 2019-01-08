@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<div id="toolbar">
+    <table><tbody>
+    <tr>
+        <td>Freeze</td>
+        <td><input type="checkbox" data-bind="checked: freeze"/></td>
+    </tr>
+    <!--<tr>-->
+        <!--<td>Terrain Enabled</td>-->
+        <!--<td><input type="checkbox" data-bind="checked: terrain"/></td>-->
+    <!--</tr>-->
+    </tbody></table>
+</div>
+<script id="cesium_sandcastle_script">
+    function startup(Cesium) {
+        'use strict';
+//Sandcastle_Begin
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            infoBox : false,
+            selectionIndicator : false,
+            terrainProvider: Cesium.createWorldTerrain()
+        });
+
+        var position = Cesium.Cartesian3.fromDegrees(-123.0744619, 44.0503706, 5000);
+        var heading = Cesium.Math.toRadians(135);
+        var pitch = 0;
+        var roll = 0;
+        var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+        var orientation = Cesium.Transforms.headingPitchRollQuaternion(position, hpr);
+
+        var entity = viewer.entities.add({
+            name : '../../SampleData/models/CesiumAir/Cesium_Air.glb',
+            position : position,
+            orientation : orientation,
+            model : {
+                uri : '../../SampleData/models/CesiumAir/Cesium_Air.glb',
+                minimumPixelSize : 128,
+                maximumScale : 20000
+            }
+        });
+
+        var scene = viewer.scene;
+        var globe = scene.globe;
+        var spotLightCamera = new Cesium.Camera(scene);
+        spotLightCamera.frustum.fov = Cesium.Math.PI_OVER_TWO;
+        spotLightCamera.frustum.aspectRatio = 1.0;
+        spotLightCamera.frustum.near = 1.0;
+        spotLightCamera.frustum.far = 500.0;
+        spotLightCamera.lookAt(position, new Cesium.HeadingPitchRange(1.0, -1.0, 1.0));
+
+        spotLightCamera.position = Cesium.Cartesian3.fromDegrees(-120.0744619, 44.0503706, 6000);
+
+
+        function freeze2() {
+            scene.shadowMap = new Cesium.ShadowMap({
+                context : scene.context,
+//                lightCamera : spotLightCamera,
+            lightCamera : scene.camera,
+                cascadesEnabled : false
+            });
+
+            var shadowMap;
+            shadowMap = scene.shadowMap;
+            shadowMap.debugFreezeFrame = true;
+            // Update render states for when polygon offset values change
+            shadowMap.debugCreateRenderStates();
+
+            // Force all derived commands to update
+            shadowMap.dirty = true;
+
+//            globe.shadows = Cesium.ShadowMode.fromCastReceive(viewModel.terrainCast, viewModel.terrainReceive);
+            globe.shadows = Cesium.ShadowMode.fromCastReceive(true, true);
+
+            shadowMap.enabled = true;
+            shadowMap.debugShow = true;
+        }
+
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(-123.0744619, 44.0503706, 50000)
+        });
+
+        var viewModel = {
+            freeze: false
+        };
+        Cesium.knockout.track(viewModel);
+        var toolbar = document.getElementById('toolbar');
+        Cesium.knockout.applyBindings(viewModel, toolbar);
+        Cesium.knockout.getObservable(viewModel, 'freeze').subscribe(updateSetting);
+
+        function updateSetting() {
+            if(viewModel.freeze){
+                freeze2();
+            }
+        }
+//Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</body>
+</html>
