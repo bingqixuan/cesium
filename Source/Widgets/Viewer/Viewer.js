@@ -44,6 +44,7 @@ define([
         '../NavigationHelpButton/NavigationHelpButton',
         '../ProjectionPicker/ProjectionPicker',
         '../SceneModePicker/SceneModePicker',
+        '../ScreenshotButton/ScreenshotButton',
         '../SelectionIndicator/SelectionIndicator',
         '../subscribeAndEvaluate',
         '../Timeline/Timeline',
@@ -94,6 +95,7 @@ define([
         NavigationHelpButton,
         ProjectionPicker,
         SceneModePicker,
+        ScreenshotButton,
         SelectionIndicator,
         subscribeAndEvaluate,
         Timeline,
@@ -199,6 +201,7 @@ define([
         var geocoder = viewer._geocoder;
         var homeButton = viewer._homeButton;
         var sceneModePicker = viewer._sceneModePicker;
+        var screenshotButton = viewer._screenshotButton;
         var projectionPicker = viewer._projectionPicker;
         var baseLayerPicker = viewer._baseLayerPicker;
         var animation = viewer._animation;
@@ -217,6 +220,9 @@ define([
         }
         if (defined(sceneModePicker)) {
             sceneModePicker.container.style.visibility = visibility;
+        }
+        if (defined(screenshotButton)) {
+            screenshotButton.container.style.visibility = visibility;
         }
         if (defined(projectionPicker)) {
             projectionPicker.container.style.visibility = visibility;
@@ -523,6 +529,23 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
             eventHelper.add(homeButton.viewModel.command.beforeExecute, Viewer.prototype._clearTrackedObject, this);
         }
 
+        // ScreenshotButton
+        var screenshotButton;
+        if (!defined(options.screenshotButton) || options.screenshotButton !== false) {
+            screenshotButton = new ScreenshotButton(toolbar, scene);
+            if (defined(geocoder)) {
+                eventHelper.add(screenshotButton.viewModel.command.afterExecute, function() {
+                    var viewModel = geocoder.viewModel;
+                    viewModel.searchText = '';
+                    if (viewModel.isSearchInProgress) {
+                        viewModel.search();
+                    }
+                });
+            }
+            // Subscribe to the home button beforeExecute event so that we can clear the trackedEntity.
+            eventHelper.add(screenshotButton.viewModel.command.beforeExecute, Viewer.prototype._clearTrackedObject, this);
+        }
+
         // SceneModePicker
         // By default, we silently disable the scene mode picker if scene3DOnly is true,
         // but if sceneModePicker is explicitly set to true, throw an error.
@@ -690,6 +713,7 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
         this._toolbar = toolbar;
         this._homeButton = homeButton;
         this._sceneModePicker = sceneModePicker;
+        this._screenshotButton = screenshotButton;
         this._projectionPicker = projectionPicker;
         this._baseLayerPicker = baseLayerPicker;
         this._navigationHelpButton = navigationHelpButton;
@@ -846,6 +870,18 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
         homeButton : {
             get : function() {
                 return this._homeButton;
+            }
+        },
+
+        /**
+         * Gets the screenshotButton.
+         * @memberof Viewer.prototype
+         * @type {screenshotButton}
+         * @readonly
+         */
+        screenshotButton : {
+            get : function() {
+                return this._screenshotButton;
             }
         },
 
@@ -1500,6 +1536,10 @@ Either specify options.terrainProvider instead or set options.baseLayerPicker to
 
         if (defined(this._sceneModePicker)) {
             this._sceneModePicker = this._sceneModePicker.destroy();
+        }
+
+        if (defined(this._screenshotButton)) {
+            this._screenshotButton = this._screenshotButton.destroy();
         }
 
         if (defined(this._projectionPicker)) {
