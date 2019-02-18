@@ -18,6 +18,7 @@ define([
         '../Core/Resource',
         '../Renderer/CubeMap',
         '../Renderer/Texture',
+        '../Shaders/Materials/AspectRampMaterial',
         '../Shaders/Materials/BumpMapMaterial',
         '../Shaders/Materials/CheckerboardMaterial',
         '../Shaders/Materials/DotMaterial',
@@ -56,6 +57,7 @@ define([
         Resource,
         CubeMap,
         Texture,
+        AspectRampMaterial,
         BumpMapMaterial,
         CheckerboardMaterial,
         DotMaterial,
@@ -248,7 +250,11 @@ define([
      *  </ul>
      *  <li>SlopeRamp</li>
      *  <ul>
-     *      <li><code>image</code>: color ramp image to use for coloring the terrain.</li>
+     *      <li><code>image</code>: color ramp image to use for coloring the terrain by slope.</li>
+     *  </ul>
+     *  <li>AspectRamp</li>
+     *  <ul>
+     *      <li><code>image</code>: color ramp image to use for color the terrain by aspect.</li>
      *  </ul>
      * </ul>
      * </ul>
@@ -1594,9 +1600,26 @@ define([
         fabric : {
             type : Material.SlopeRampMaterialType,
             uniforms : {
-                image: Material.DefaultImageId
+                image : Material.DefaultImageId
             },
             source : SlopeRampMaterial
+        },
+        translucent : false
+    });
+
+    /**
+     * Gets the name of the aspect ramp material.
+     * @type {String}
+     * @readonly
+     */
+    Material.AspectRampMaterialType = 'AspectRamp';
+    Material._materialCache.addMaterial(Material.AspectRampMaterialType, {
+        fabric: {
+            type : Material.AspectRampMaterialType,
+            uniforms : {
+                image : Material.DefaultImageId
+            },
+            source : AspectRampMaterial
         },
         translucent : false
     });

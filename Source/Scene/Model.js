@@ -2008,7 +2008,10 @@ define([
             }
         }
 
-        var result = shader;
+        // This is not needed after the program is processed, free the memory
+        model._programPrimitives[programName] = undefined;
+
+        var result;
         if (model.extensionsUsed.WEB3D_quantized_attributes) {
             result = ModelUtility.modifyShaderForQuantizedAttributes(model.gltf, primitive, shader);
             model._quantizedUniforms[programName] = result.uniforms;
@@ -2016,11 +2019,10 @@ define([
             var decodedData = model._decodedData[primitiveId];
             if (defined(decodedData)) {
                 result = ModelUtility.modifyShaderForDracoQuantizedAttributes(model.gltf, primitive, shader, decodedData.attributes);
+            } else {
+                return shader;
             }
         }
-
-        // This is not needed after the program is processed, free the memory
-        model._programPrimitives[programName] = undefined;
 
         return result.shader;
     }
@@ -3919,7 +3921,7 @@ define([
             'uniform vec4 gltf_silhouetteColor; \n' +
             'void main() \n' +
             '{ \n' +
-            '    gl_FragColor = gltf_silhouetteColor; \n' +
+            '    gl_FragColor = czm_gammaCorrect(gltf_silhouetteColor); \n' +
             '}';
 
         return ShaderProgram.fromCache({
