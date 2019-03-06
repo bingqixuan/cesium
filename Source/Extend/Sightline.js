@@ -1,5 +1,5 @@
 /**
- * Created by rick on 2018/1/10.
+ * Created by bingqixuan on 2018/1/10.
  */
 define([
     '../Core/BoundingRectangle',
