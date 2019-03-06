@@ -1,13 +1,20 @@
 Change Log
 ==========
 
+### 1.56 - 2019-04-01
+
+##### Fixes :wrench:
+* Fixed the value for `BlendFunction.ONE_MINUS_CONSTANT_COLOR`. [#7624](https://github.com/AnalyticalGraphicsInc/cesium/pull/7624)
+
 ### 1.55 - 2019-03-01
 
 ##### Breaking Changes :mega:
 * `czm_materialInput.slope` is now an angle in radians between 0 and pi/2 (flat to vertical), rather than a projected length 1 to 0 (flat to vertical).
 
 ##### Additions :tada:
+* Updated terrain and imagery rendering, resulting in terrain/imagery loading ~33% faster and using ~33% less data [#7061](https://github.com/AnalyticalGraphicsInc/cesium/pull/7061)
 * `czm_materialInput.aspect` was added as an angle in radians between 0 and 2pi (east, north, west to south).
+* Added CZML `arcType` support for `polyline` and `polygon`, which supersedes `followSurface`. `followSurface` is still supported for compatibility with existing documents. [#7582](https://github.com/AnalyticalGraphicsInc/cesium/pull/7582)
 
 ##### Fixes :wrench:
 * Fixed an issue where models would cause a crash on load if some primitives were Draco encoded and others were not. [#7383](https://github.com/AnalyticalGraphicsInc/cesium/issues/7383)
@@ -19,7 +26,7 @@ Change Log
 * Fixed model silhouette colors when rendering with high dynamic range. [#7563](https://github.com/AnalyticalGraphicsInc/cesium/pull/7563)
 * Fixed an issue with ground polylines on globes that use ellipsoids other than WGS84. [#7552](https://github.com/AnalyticalGraphicsInc/cesium/issues/7552)
 * Fixed an issue where Draco compressed models with RGB per-vertex color would not load in Cesium. [#7576](https://github.com/AnalyticalGraphicsInc/cesium/issues/7576)
-* Fixed an issue where the outline geometry for extruded Polygons didn't calculate the correct indices. [#7599](https://github.com/AnalyticalGraphicsInc/cesium/issues/7599) 
+* Fixed an issue where the outline geometry for extruded Polygons didn't calculate the correct indices. [#7599](https://github.com/AnalyticalGraphicsInc/cesium/issues/7599)
 
 ### 1.54 - 2019-02-01
 
