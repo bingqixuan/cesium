@@ -195,6 +195,7 @@ define(function () {
 			try {
 				return resolve(onFulfilled ? onFulfilled(value) : value);
 			} catch(e) {
+                console.error(e);
 				return rejected(e);
 			}
 		});

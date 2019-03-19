@@ -314,7 +314,7 @@ define([
         "} \n" +
         "void main() { \n" +
         "    vec4 positionEC = getPositionEC(); \n" +  // 获得视图坐标
-        "    vec4 sightlinePosition = u_sightlineMatrix * positionEC; \n" +  //  获得平面坐标
+        "    vec4 sightlinePosition = u_sightlineMatrix * positionEC; \n" +  //  获得视点空间下平面坐标
         "    sightlinePosition /= sightlinePosition.w; \n" +
         "    vec2 texCoords = sightlinePosition.xy; \n" +  // 纹理坐标
         "    float depth = sightlinePosition.z; \n" +  // 通视线的片段的深度

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<script id="cesium_sandcastle_script">
+    var viewer;
+    function startup(Cesium) {
+        'use strict';
+//Sandcastle_Begin
+var ellipsoid = new Cesium.Ellipsoid(1737400,1737400,1737400);
+
+Cesium.Ellipsoid.WGS84 = ellipsoid;
+var mapProjection = new Cesium.GeographicProjection(ellipsoid);
+
+var globe = new Cesium.Globe(ellipsoid);
+globe.showGroundAtmosphere = false; // necessary for tiles to show in non-earth ellipsoid
+globe.depthTestAgainstTerrain = true;
+var terrainProvider = new Cesium.CesiumTerrainProvider({
+    url: 'https://files.actgate.com/terrain/lunar_gld100',
+    ellipsoid: ellipsoid
+});
+
+var opts = {
+    mapProjection: mapProjection,
+    globe: globe,
+    terrainProvider: terrainProvider,
+    skyAtmosphere: false,
+
+    // Hide unnecessary UI
+    selectionIndicator: false,
+    baseLayerPicker: false,
+    timeline: false,
+    geocoder: false,
+    infoBox: false,
+    sceneModePicker: false,
+    animation: false
+
+};
+
+var viewer = new Cesium.Viewer('cesiumContainer', opts);
+viewer.scene.fog.enabled = false;
+var imageryLayers = viewer.imageryLayers;
+imageryLayers.addImageryProvider(new Cesium.WebMapServiceImageryProvider({
+    url : 'https://webmap.lroc.asu.edu/',
+    layers : 'luna_wac_global',
+    parameters : {
+        transparent : true,
+        format : 'image/png'
+    },
+    tilingScheme: new Cesium.GeographicTilingScheme({ ellipsoid: ellipsoid }),
+    tileWidth: 512,
+    tileHeight: 512
+}));
+
+
+/**
+Point + Label Feature Issues
+
+1) bits and pieces of label go missing behind terrain when say zooming in and out from above
+2) zoom in too close and both point and label completely disappear
+3) tilt camera pitch down to look as if from bottom of crater surface and entity vanishes
+*/
+viewer.entities.add({
+    position: Cesium.Cartesian3.fromDegrees(-11.2153, -43.2958, null, ellipsoid),
+    point : {
+        color : Cesium.Color.SKYBLUE,
+        pixelSize : 10,
+        outlineColor : Cesium.Color.YELLOW,
+        outlineWidth : 3,
+        heightReference : Cesium.HeightReference.CLAMP_TO_GROUND
+    },
+    label : {
+        text : 'Tycho',
+        font : '14pt sans-serif',
+        heightReference : Cesium.HeightReference.CLAMP_TO_GROUND,
+        horizontalOrigin : Cesium.HorizontalOrigin.LEFT,
+        verticalOrigin : Cesium.VerticalOrigin.BASELINE,
+        fillColor : Cesium.Color.BLACK,
+        showBackground : true,
+        backgroundColor : new Cesium.Color(1, 1, 1, 0.7),
+        backgroundPadding : new Cesium.Cartesian2(8, 4),
+        //disableDepthTestDistance : Number.POSITIVE_INFINITY // draws the label in front of terrain
+    }
+});
+
+
+/**
+Line Feature Issues
+
+1) enabling clampToGround doesn't work, seems to render entity off in space maybe?
+2) tilt camera pitch down to look as if from bottom of crater surface and entity vanishes
+*/
+viewer.entities.add({
+            polyline : {
+                positions : Cesium.Cartesian3.fromDegreesArray([
+                -12.86401, -42.43998,
+                -9.47402, -44.37729
+                ], ellipsoid),
+                //clampToGround : true,
+                width : 5,
+                material : new Cesium.PolylineOutlineMaterialProperty({
+                    color : Cesium.Color.ORANGE,
+                    outlineWidth : 2,
+                    outlineColor : Cesium.Color.BLACK
+                })
+            }
+        });
+
+/**
+Line Feature Issues
+
+1) Should be draping down side of crater wall, but instead only appears in a thin spot
+2) tilt camera pitch down to look as if from bottom of crater surface and entity vanishes
+*/
+viewer.entities.add({
+            polygon : {
+                hierarchy : {
+                    positions : Cesium.Cartesian3.fromDegreesArray([
+                        -13.13654, -43.07858,
+                        -12.98742, -42.67825,
+                        -12.16686, -42.89018,
+                        -12.40031, -43.26695,
+                        -13.13654, -43.07858
+                    ])
+                },
+                material : Cesium.Color.BLUE.withAlpha(0.5)
+            }
+        });
+
+viewer.zoomTo(viewer.entities);
+
+//Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</body>
+</html>
