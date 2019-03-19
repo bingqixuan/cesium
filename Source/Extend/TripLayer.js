@@ -81,15 +81,20 @@ define([
             instances.push(new GeometryInstance({
                 geometry: new PolylineGeometry({
                     positions: positions,
-                    width: 3.0
+                    width: 1.0,
+                    // vertexFormat : Cesium.PolylineColorAppearance.VERTEX_FORMAT
                 }),
                 attributes: {
-                    color: ColorGeometryInstanceAttribute.fromColor(new Color(color[0], color[1], color[2]))
+                    color: ColorGeometryInstanceAttribute.fromColor(new Color(color[0]/255, color[1]/255, color[2]/255, 1.0))
+                    // color: ColorGeometryInstanceAttribute.fromColor(new Color(1.0, 0.0, 0.0, 1.0))
                 }
             }));
         }
 
-        var tripFS = "void main() { \n" +
+        var tripFS =
+        // "varying vec4 v_color; \n" +
+        "void main() { \n" +
+        // "   gl_FragColor = v_color; \n" +
         "   gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); \n" +
         "} \n";
         var appearance = new PolylineMaterialAppearance({
@@ -102,10 +107,10 @@ define([
 
         this._sightlinePrimitive = this._polylines.add(new Primitive({
             geometryInstances: instances,
-            // appearance: appearance,
-            appearance: new PolylineColorAppearance({
-                translucent : false
-            }),
+            appearance: appearance,
+            // appearance: new PolylineColorAppearance({
+            //     translucent : false
+            // }),
             allowPicking: false
         }));
     }
