@@ -1,6 +1,9 @@
-/**
- * Created by bingqixuan on 2019/2/26.
+/*
+ * @LastEditors: bingqixuan
+ * @Date: 2019-02-26 11:20:24
+ * @LastEditTime: 2019-03-22 17:19:51
  */
+
 define([
     '../Core/Cartesian3',
     '../Core/Color',
@@ -11,6 +14,8 @@ define([
     '../Core/GeometryInstance',
     '../Core/PolylineGeometry',
     '../Core/Resource',
+    '../Core/VertexFormat',
+    '../Scene/PerInstanceColorAppearance',
     '../Scene/PolylineColorAppearance',
     '../Scene/PolylineMaterialAppearance',
     '../Scene/Primitive',
@@ -24,6 +29,8 @@ define([
     GeometryInstance,
     PolylineGeometry,
     Resource,
+    VertexFormat,
+    PerInstanceColorAppearance,
     PolylineColorAppearance,
     PolylineMaterialAppearance,
     Primitive,
@@ -50,7 +57,7 @@ define([
             throw new DeveloperError('options.data is required.');
         }
         this._data = options.data;
-        this._currentTime = options.currentTime;
+        this._currentTime = defaultValue(options.currentTime, Date.now() / 1000);
         this._polylines = this._scene.primitives.add(new PrimitiveCollection());
 
 
@@ -82,7 +89,7 @@ define([
                 geometry: new PolylineGeometry({
                     positions: positions,
                     width: 1.0,
-                    // vertexFormat : Cesium.PolylineColorAppearance.VERTEX_FORMAT
+                    vertexFormat : VertexFormat.POSITION_AND_COLOR
                 }),
                 attributes: {
                     color: ColorGeometryInstanceAttribute.fromColor(new Color(color[0]/255, color[1]/255, color[2]/255, 1.0))
@@ -92,25 +99,27 @@ define([
         }
 
         var tripFS =
-        // "varying vec4 v_color; \n" +
+        "varying vec4 v_color; \n" +
         "void main() { \n" +
-        // "   gl_FragColor = v_color; \n" +
-        "   gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); \n" +
+        "   gl_FragColor = v_color; \n" +
+        // "   gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); \n" +
         "} \n";
-        var appearance = new PolylineMaterialAppearance({
-            // vertexShaderSource: SightlineAppearanceVS,
-            fragmentShaderSource: tripFS
+         var appearance = new PolylineColorAppearance({
+            fragmentShaderSource: tripFS,
+            translucent : false
         });
         appearance.uniforms = {
-
+            currentTime: ()=>{
+                return Date.now() / 1000;
+            },
+            trailLength: function(){
+                return 200;
+            }
         };
 
         this._sightlinePrimitive = this._polylines.add(new Primitive({
             geometryInstances: instances,
             appearance: appearance,
-            // appearance: new PolylineColorAppearance({
-            //     translucent : false
-            // }),
             allowPicking: false
         }));
     }
