@@ -31,18 +31,21 @@
         window.Cesium = Cesium;
         viewer = new Cesium.Viewer('cesiumContainer', {
             // Use Cesium World Terrain
-            terrainProvider: Cesium.createWorldTerrain({
-                requestVertexNormals: true //Needed to visualize slope
-            })
+            // terrainProvider: Cesium.createWorldTerrain({
+            //     requestVertexNormals: true //Needed to visualize slope
+            // })
         });
 
-        new Cesium.TripLayer({
+        var trip = new Cesium.TripLayer({
             scene: viewer.scene,
             data: 'trips.json'
-        })
+        });
+        setTimeout(function(){
+            trip.destroy();
+        }, 10000)
 
         viewer.scene.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(-74.20986, 40.81773)
+            destination: Cesium.Cartesian3.fromDegrees(-74.20986, 40.81773, 100)
         })
 //Sandcastle_End
         Sandcastle.finishedLoading();

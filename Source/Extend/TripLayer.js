@@ -1,7 +1,12 @@
 /*
  * @LastEditors: bingqixuan
+ * @Date: 2019-03-23 18:29:12
+ * @LastEditTime: 2019-03-24 16:39:34
+ */
+/*
+ * @LastEditors: bingqixuan
  * @Date: 2019-02-26 11:20:24
- * @LastEditTime: 2019-03-24 11:31:14
+ * @LastEditTime: 2019-03-24 16:43:02
  */
 
 define([
@@ -12,6 +17,7 @@ define([
     '../Core/ComponentDatatype',
     '../Core/defaultValue',
     '../Core/defined',
+    '../Core/destroyObject',
     '../Core/DeveloperError',
     '../Core/Geometry',
     '../Core/GeometryAttribute',
@@ -28,6 +34,7 @@ define([
     ComponentDatatype,
     defaultValue,
     defined,
+    destroyObject,
     DeveloperError,
     Geometry,
     GeometryAttribute,
@@ -45,7 +52,6 @@ define([
      * @param {Object} options        参数
      * @param {Scene}  options.scene  地球场景
      * @param {Object} options.data   轨迹线数据
-     * @param {JulianDate} options.currentTime 当前时间
      */
     function TripLayer(options) {
         options = defaultValue(options, defaultValue.EMPTY_OBJECT);
@@ -59,7 +65,6 @@ define([
             throw new DeveloperError('options.data is required.');
         }
         this._data = options.data;
-        this._currentTime = defaultValue(options.currentTime, Date.now() / 1000);
         this._polylines = this._scene.primitives.add(new PrimitiveCollection());
 
 
@@ -74,22 +79,6 @@ define([
             });
         }
     }
-
-
-    // function TriplineGeometry(positions, indices){
-    //     var attributes = new GeometryAttributes({
-    //         position : new GeometryAttribute({
-    //             componentDatatype : ComponentDatatype.DOUBLE,
-    //             componentsPerAttribute : 3,
-    //             values : positions
-    //         })
-    //     });
-    //     this.attributes = attributes;
-    //     this.indices = indices;
-    //     this.primitiveType = PrimitiveType.LINES;
-    //     this.boundingSphere = BoundingSphere.fromVertices(positions);
-    // }
-
 
     TripLayer.prototype.createGeometryInstances = function(instances) {
         for (var i = 0; i < this._data.length; i++) {
@@ -157,7 +146,7 @@ define([
             vec4 p = czm_computePosition();\n\
         \n\
             v_color = color;\n\
-            v_time = 1.0 - (currentTime-postime) / trailLength;\n\
+            v_time = 1.0 - (currentTime - postime) / trailLength;\n\
         \n\
             gl_Position = czm_modelViewProjectionRelativeToEye * p;\n\
         }\n\
@@ -193,7 +182,7 @@ define([
             trailLength: 200
         };
 
-        this._sightlinePrimitive = this._polylines.add(new Primitive({
+        this._polylines.add(new Primitive({
             geometryInstances: instances,
             appearance: appearance,
             // appearance : new PerInstanceColorAppearance({
@@ -204,6 +193,17 @@ define([
             allowPicking: false,
             asynchronous: false
         }));
+    }
+
+
+    /**
+     * @description: 销毁轨迹对象
+     * @param {type}
+     * @return: undefined
+     */
+    TripLayer.prototype.destroy = function(){
+        this._scene.primitives.remove(this._polylines);
+        return destroyObject(this);
     }
 
     function getColor(item) {
