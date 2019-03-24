@@ -1102,6 +1102,9 @@ define([
     }
 
     function getUniformFunction(uniforms, name) {
+        if(uniforms[name] instanceof Function){
+            return uniforms[name];
+        }
         return function() {
             return uniforms[name];
         };
