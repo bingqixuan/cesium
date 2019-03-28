@@ -1,7 +1,7 @@
 /*
  * @LastEditors: bingqixuan
  * @Date: 2019-03-27 18:17:10
- * @LastEditTime: 2019-03-27 20:54:03
+ * @LastEditTime: 2019-03-28 17:11:25
  */
 
  define([
@@ -43,23 +43,88 @@
  ){
     'use strict';
 
+    /**
+     * @description: 风可视化图层。采用彩色地图来显示每个像素处的风速(从数据集内插)；
+     * @param {type} options
+     * @return
+     */
     function WindLayer(options){
         options = defaultValue(options, defaultValue.EMPTY_OBJECT);
         if (!defined(options.scene)) {
             throw new DeveloperError('options.scene is required.');
         }
         this._scene = options.scene;
+
+        if (!defined(options.data)) {
+            throw new DeveloperError('options.data is required.');
+        }
+        this._data = options.data;
         this._windLayer = this._scene.primitives.add(new PrimitiveCollection());
-        this.init();
+
+        if (typeof this._data === 'string') {
+            Resource.fetchJson({
+                url: this._data
+            }).then((json) => {
+                this._data = json;
+                this._createFill();
+            });
+        }else{
+            this._createFill();
+        }
+
     }
 
-    WindLayer.prototype.init = function(){
+    WindLayer.prototype._createFill = function(){
         var ramp = createColorRamp(this._scene);
         var appearance = new EllipsoidSurfaceAppearance({
-            aboveGround: false
+            aboveGround: false,
+            material: new Material({
+                fabric: {
+                    uniforms: {
+                        u_wind: this._data.tiles[0],
+                        u_wind_res: new Cartesian2(this._data.width, this._data.height),
+                        u_wind_min: new Cartesian2(this._data.uMin, this._data.vMin),
+                        u_wind_max: new Cartesian2(this._data.uMax, this._data.vMax),
+                        u_color_ramp: ramp
+                    },
+                    materials: {
+                        bumpMap: {
+                            type: 'BumpMap'
+                            // uniforms: {
+                            //     image: '../images/earthbump1k.jpg'
+                            // }
+                        }
+                    },
+                    source: 'czm_material czm_getMaterial(czm_materialInput materialInput) { \n' +
+                        '    czm_material material = czm_getDefaultMaterial(materialInput); \n' +
+                        // '    vec4 color; \n' +
+                        // '    float heightValue = texture2D(heightField, materialInput.st).r; \n' +
+                        // '    color.rgb = mix(vec3(0.2, 0.6, 0.2), vec3(1.0, 0.5, 0.2), heightValue); \n' +
+                        // '    color.a = (1.0 - texture2D(image, materialInput.st).r) * 0.7; \n' +
+                        '    vec2 px = 1.0 / u_wind_res; \n' +
+                        '    vec2 vc = (floor(materialInput.st * u_wind_res)) * px; \n' +
+                        '    vec2 f = fract(materialInput.st * u_wind_res); \n' +
+                        '    vec2 tl = texture2D(u_wind, vc).rg; \n' +
+                        '    vec2 tr = texture2D(u_wind, vc + vec2(px.x, 0)).rg; \n' +
+                        '    vec2 bl = texture2D(u_wind, vc + vec2(0, px.y)).rg; \n' +
+                        '    vec2 br = texture2D(u_wind, vc + px).rg; \n' +
+                        '    vec2 windSpeedRelative = mix(mix(tl, tr, f.x), mix(bl, br, f.x), f.y); \n' +
+                        '    vec2 windSpeed = mix(u_wind_min, u_wind_max, windSpeedRelative); \n' +
+                        '    float speed_t = length(windSpeed / length(u_wind_max)); \n' +
+                        '    vec2 ramp_pos = vec2(fract(16.0 * speed_t), floor(16.0 * speed_t) / 16.0); \n' +
+                        '    vec4 color = texture2D(u_color_ramp, ramp_pos); \n' +
+                        '    material.diffuse = color.rgb; \n' +
+                        '    material.alpha = color.a; \n' +
+                        // '    material.normal = bumpMap.normal; \n' +
+                        // '    material.specular = step(0.1, heightValue); \n' + // Specular mountain tops
+                        // '    material.shininess = 8.0; \n' + // Sharpen highlight
+                        '    return material; \n' +
+                        '} \n'
+                }
+            })
             // fragmentShaderSource: windFS
         });
-        var worldRectangle = this._windLayer.add(new Primitive({
+        this._windLayer.add(new Primitive({
             geometryInstances: new GeometryInstance({
                 geometry: new RectangleGeometry({
                     rectangle: Rectangle.fromDegrees(-180.0, -90.0, 180.0, 90.0),
@@ -69,50 +134,6 @@
             appearance: appearance,
             show: true
         }));
-        worldRectangle.appearance.material = new Material({
-            fabric: {
-                uniforms: {
-                    u_wind: '2016112006.png',
-                    u_wind_res: new Cartesian2(360, 180),
-                    u_wind_min: new Cartesian2(-19.38, -21.19),
-                    u_wind_max: new Cartesian2(25.57, 22.77),
-                    u_color_ramp: ramp
-                },
-                materials: {
-                    bumpMap: {
-                        type: 'BumpMap'
-                        // uniforms: {
-                        //     image: '../images/earthbump1k.jpg'
-                        // }
-                    }
-                },
-                source: 'czm_material czm_getMaterial(czm_materialInput materialInput) { \n' +
-                    '    czm_material material = czm_getDefaultMaterial(materialInput); \n' +
-                    // '    vec4 color; \n' +
-                    // '    float heightValue = texture2D(heightField, materialInput.st).r; \n' +
-                    // '    color.rgb = mix(vec3(0.2, 0.6, 0.2), vec3(1.0, 0.5, 0.2), heightValue); \n' +
-                    // '    color.a = (1.0 - texture2D(image, materialInput.st).r) * 0.7; \n' +
-                    '    vec2 px = 1.0 / u_wind_res; \n' +
-                    '    vec2 vc = (floor(materialInput.st * u_wind_res)) * px; \n' +
-                    '    vec2 f = fract(materialInput.st * u_wind_res); \n' +
-                    '    vec2 tl = texture2D(u_wind, vc).rg; \n' +
-                    '    vec2 tr = texture2D(u_wind, vc + vec2(px.x, 0)).rg; \n' +
-                    '    vec2 bl = texture2D(u_wind, vc + vec2(0, px.y)).rg; \n' +
-                    '    vec2 br = texture2D(u_wind, vc + px).rg; \n' +
-                    '    vec2 windSpeedRelative = mix(mix(tl, tr, f.x), mix(bl, br, f.x), f.y); \n' +
-                    '    vec2 windSpeed = mix(u_wind_min, u_wind_max, windSpeedRelative); \n' +
-                    '    float speed_t = length(windSpeed / length(u_wind_max)); \n' +
-                    '    vec2 ramp_pos = vec2(fract(16.0 * speed_t), floor(16.0 * speed_t) / 16.0); \n' +
-                    '    vec4 color = texture2D(u_color_ramp, ramp_pos); \n' +
-                    '    material.diffuse = color.rgb; \n' +
-                    '    material.alpha = color.a; \n' +
-                    // '    material.normal = bumpMap.normal; \n' +
-                    // '    material.specular = step(0.1, heightValue); \n' + // Specular mountain tops
-                    // '    material.shininess = 8.0; \n' + // Sharpen highlight
-                    '    return material; \n' +
-                    '} \n'
-            }
-        });
     };
 
     function createColorRamp(scene) {

@@ -44,7 +44,19 @@
             });
 
             new Cesium.WindLayer({
-                scene: viewer.scene
+                scene: viewer.scene,
+                data: {
+                    "source": "http://nomads.ncep.noaa.gov",
+                    "date": "2016-11-20T600:00Z",
+                    "width": 360,    // 图片宽度像素
+                    "height": 180,   // 图片高度像素
+                    "uMin": -19.38,
+                    "uMax": 25.57,
+                    "vMin": -21.19,
+                    "vMax": 22.77,
+                    "tiles": ["2016112006.png"]  // 风速编码的PNG图像,R通道对应x（或u），G通道对应y（或v）
+                }
+
             })
             //Sandcastle_End
             Sandcastle.finishedLoading();
