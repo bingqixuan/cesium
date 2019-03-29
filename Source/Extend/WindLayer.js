@@ -1,7 +1,7 @@
 /*
  * @LastEditors: bingqixuan
  * @Date: 2019-03-27 18:17:10
- * @LastEditTime: 2019-03-28 17:11:25
+ * @LastEditTime: 2019-03-29 16:09:47
  */
 
  define([
@@ -13,6 +13,7 @@
     '../Core/PixelFormat',
     '../Core/Rectangle',
     '../Core/RectangleGeometry',
+    '../Core/Resource',
     '../Scene/EllipsoidSurfaceAppearance',
     '../Scene/Material',
     '../Scene/Primitive',
@@ -31,6 +32,7 @@
     PixelFormat,
     Rectangle,
     RectangleGeometry,
+    Resource,
     EllipsoidSurfaceAppearance,
     Material,
     Primitive,
@@ -135,6 +137,71 @@
             show: true
         }));
     };
+
+
+    WindLayer.prototype._createParticle = function(){
+        this._numParticles = 256 * 256;
+        var particleState = new Uint8Array(this._numParticles * 4);
+        for (var i = 0; i < particleState.length; i++) {
+            particleState[i] = Math.floor(Math.random() * 256); // 随机初始化粒子位置
+        }
+
+        // 创建两个纹理保存当前帧和下一帧的粒子状态
+        this._particleTexture0 = new Texture({
+            context: this._scene.context,
+            width: 256,
+            height: 256,
+            pixelFormat: PixelFormat.RGBA,
+            pixelDatatype: PixelDatatype.UNSIGNED_BUTE,
+            sampler: new Sampler({
+                wrapS: TextureWrap.CLAMP_TO_EDGE,  // 默认值
+                wrapT: TextureWrap.CLAMP_TO_EDGE,
+                minificationFilter: TextureMinificationFilter.NEAREST,
+                magnificationFilter: TextureMagnificationFilter.NEAREST
+            })
+        });
+        this._particleTexture0.copyFrom({
+            width : 256,
+            height : 256,
+            arrayBufferView : particleState
+        });
+
+        this._particleTexture1 = new Texture({
+            context: this._scene.context,
+            width: 256,
+            height: 256,
+            pixelFormat: PixelFormat.RGBA,
+            pixelDatatype: PixelDatatype.UNSIGNED_BUTE,
+            sampler: new Sampler({
+                wrapS: TextureWrap.CLAMP_TO_EDGE,  // 默认值
+                wrapT: TextureWrap.CLAMP_TO_EDGE,
+                minificationFilter: TextureMinificationFilter.NEAREST,
+                magnificationFilter: TextureMagnificationFilter.NEAREST
+            })
+        });
+        this._particleTexture1.copyFrom({
+            width : 256,
+            height : 256,
+            arrayBufferView : particleState
+        });
+
+        var particleIndices = new Float32Array(this._numParticles);
+	    for (var i$1 = 0; i$1 < this._numParticles; i$1++) { particleIndices[i$1] = i$1; }
+    }
+
+    WindLayer.prototype._particleUpdate = function(){
+        var framebuffer = new Framebuffer({
+            context: this._scene.context,
+            colorTextures: [this._particleTexture1],
+            destroyAttachments: false
+        });
+
+        // 交换粒子状态纹理
+        var temp = this._particleTexture0;
+	    this._particleTexture0 = this._particleTexture1;
+	    this._particleTexture1 = temp;
+    }
+
 
     function createColorRamp(scene) {
         var colorData =
