@@ -43,26 +43,58 @@
                     //     requestVertexNormals: true //Needed to visualize slope
                     // })
                 });
-                viewer.scene.mode = 2;
-                viewer.imageryLayers.removeAll();
-                viewer.scene.globe.baseColor = new Cesium.Color(
-                    0.0,
-                    113 / 255,
-                    189 / 255,
-                    1.0
-                );
+                var array = [
+                    179.55860900005115,
+                    -16.76816700024841,
+                    178.7283389996889,
+                    -17.01658799977855,
+                    178.49533100046852,
+                    -16.810583000246936,
+                    178.53321799935446,
+                    -16.64500000049088,
+                    178.94799799935248,
+                    -16.463944999502928,
+                    179.06601366174567,
+                    -16.428321405349266,
+                    179.999988541385,
+                    -16.146167237867758,
+                    179.55860900005115,
+                    -16.76816700024841
+                ];
 
-                viewer.scene.globe.depthTestAgainstTerrain = false;
-                Cesium.Resource.fetchJson({
-                    url: "country_a.geojson"
-                }).then(jsonData => {
-                    let promise = Cesium.GeoJsonDataSource.load(jsonData);
-                    promise.then(dataSource => {
-                        viewer.dataSources.add(dataSource);
-                    });
+                function boxPositions() {
+                    return [
+                        new Cesium.Cartesian2(-50000, -50000),
+                        new Cesium.Cartesian2(50000, -50000),
+                        new Cesium.Cartesian2(50000, 50000),
+                        new Cesium.Cartesian2(-50000, 50000)
+                    ];
+                }
+                var greenBox = new Cesium.GeometryInstance({
+                    geometry: new Cesium.PolylineVolumeGeometry({
+                        polylinePositions: Cesium.Cartesian3.fromDegreesArray(
+                            array
+                        ),
+                        vertexFormat:
+                            Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+                        shapePositions: boxPositions(),
+                        cornerType: Cesium.CornerType.BEVELED
+                    }),
+                    attributes: {
+                        color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+                            Cesium.Color.GREEN
+                        )
+                    }
                 });
-                viewer.scene.globe.enableLighting = false;
-
+                viewer.scene.primitives.add(
+                    new Cesium.Primitive({
+                        geometryInstances: greenBox,
+                        appearance: new Cesium.PerInstanceColorAppearance({
+                            translucent: false,
+                            closed: true
+                        })
+                    })
+                );
                 //Sandcastle_End
                 Sandcastle.finishedLoading();
             }
