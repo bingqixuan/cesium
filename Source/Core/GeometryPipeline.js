@@ -2569,6 +2569,8 @@ define([
      * intersect the International Date Line and Prime Meridian so that no primitives cross longitude
      * -180/180 degrees.  This is not required for 3D drawing, but is required for
      * correcting drawing in 2D and Columbus view.
+     * 通过引入新的顶点和索引，分割与国际日期变更线和本初子午线相交的Instance几何数据，以使没有一个primitive跨越 -180/180 的经度。
+     * 对于3D绘制没有需要，主要是为了针对2D和哥伦布视图来修改绘制。
      *
      * @private
      *
