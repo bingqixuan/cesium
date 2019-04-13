@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<script id="cesium_sandcastle_script">
+    var viewer;
+    function startup(Cesium) {
+        'use strict';
+//Sandcastle_Begin
+        window.Cesium = Cesium;
+        viewer = new Cesium.Viewer('cesiumContainer', {
+            // Use Cesium World Terrain
+            // terrainProvider: Cesium.createWorldTerrain({
+            //     requestVertexNormals: true //Needed to visualize slope
+            // })
+        });
+
+        viewer.scene.debugShowFramesPerSecond = true;
+    var collection = new Cesium.PointPrimitiveCollection();
+    viewer.scene.primitives.add(collection);
+    var points = [];
+
+    for (var i = 0; i < 10000; i++) {
+        var lat =  Math.random() * 360 - 180;
+        var long =  Math.random() * 360 - 180;
+        points.push(collection.add({
+            position : Cesium.Cartesian3.fromDegrees(lat, long),
+            pixelSize: 1
+        }));
+    }
+
+    // 用web worker计算位置
+    function worker() {
+        setInterval(function() {
+            var data = new Float64Array(100000);
+            for (var i = 0; i < 100000; i+=2) {
+                var lat =  Math.random() * 360 - 180;
+                var long =  Math.random() * 360 - 180;
+                data[i] = long;
+                data[i+1] = lat;
+            }
+            // 使用Transferable Objects，一旦转移这个buffer，当前线程便无法再使用该buffer。这使得主线程可以快速把数据交给 Worker，对于影像处理、声音处理、3D 运算等就非常方便了，不会产生性能负担。
+            postMessage(data, [data.buffer]);
+        }, 100);
+    }
+    var code = worker.toString();
+    code = code.substring(code.indexOf("{")+1, code.lastIndexOf("}"));
+    var blob = new Blob([code], {type: "application/javascript"});
+    var worker = new Worker(URL.createObjectURL(blob));
+
+    // 保存新位置
+    var newPoints = [];
+    worker.onmessage = function(m) {
+        newPoints = m.data;
+    };
+
+    // 每秒更新位置
+    var lastTime = Date.now();
+    var scratch = new Cesium.Cartesian3();
+    var item = 0;
+    viewer.scene.preRender.addEventListener(function() {
+        viewer.camera.rotateLeft();
+
+        if (newPoints.length > 0) {
+            for (var i = 0; i < newPoints.length; i += 2) {
+                points[i].position = Cesium.Cartesian3.fromDegrees(newPoints[i], newPoints[i + 1], 0, undefined, scratch);
+            }
+            newPoints = [];
+        }
+    });
+//Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</body>
+</html>

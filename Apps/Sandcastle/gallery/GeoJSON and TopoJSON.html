@@ -31,15 +31,19 @@ var viewer = new Cesium.Viewer('cesiumContainer');
 
 //Example 1: Load with default styling.
 Sandcastle.addDefaultToolbarButton('Default styling', function() {
-    viewer.dataSources.add(Cesium.GeoJsonDataSource.load('../../SampleData/ne_10m_us_states.topojson'));
+    viewer.dataSources.add(Cesium.GeoJsonDataSource.load('../../SampleData/ne_10m_us_states.topojson',{
+        strokeWidth: 30,
+        stroke: Cesium.Color.GREEN
+    }));
 });
 
 //Example 2: Load with basic styling options.
 Sandcastle.addToolbarButton('Basic styling', function() {
     viewer.dataSources.add(Cesium.GeoJsonDataSource.load('../../SampleData/ne_10m_us_states.topojson', {
-        stroke: Cesium.Color.HOTPINK,
+        stroke: Cesium.Color.GREEN,
         fill: Cesium.Color.PINK.withAlpha(0.5),
-        strokeWidth: 3
+        strokeWidth: 30,
+        clampToGround:true
     }));
 });
 

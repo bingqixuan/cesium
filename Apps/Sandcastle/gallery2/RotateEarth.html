@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<script id="cesium_sandcastle_script">
+    var viewer, recover;
+    function startup(Cesium) {
+        'use strict';
+//Sandcastle_Begin
+        window.Cesium = Cesium;
+        viewer = new Cesium.Viewer('cesiumContainer');
+
+        // 相机的destination中，纬度必须为0，就是让相机处于直视赤道状态，orientation必须为下列值。
+        viewer.scene.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(50, 0, 2e7),
+            orientation: {
+                heading : Cesium.Math.toRadians(0),
+                pitch : Cesium.Math.toRadians(-90),
+                roll : 0.0
+            }
+        })
+
+        // 当为全球视图状态下。相机控制器需调整为以下参数。
+        viewer.scene.screenSpaceCameraController.enableRotate = false;
+        viewer.scene.screenSpaceCameraController.enableTranslate = false;
+        viewer.scene.screenSpaceCameraController.enableTilt = false;
+        viewer.scene.screenSpaceCameraController.enableLook = false;
+
+        // 思路是根据鼠标拖拽的位置来计算相机的转向
+        var currentPosition, lastPosition;
+        var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction(function(movement) {
+            currentPosition = lastPosition = Cesium.Cartesian2.clone(movement.position);
+            handler.setInputAction(function(move) {
+                currentPosition = Cesium.Cartesian2.clone(move.endPosition);
+                if(currentPosition && lastPosition){
+                    viewer.camera.rotateRight(-0.001 * (currentPosition.x - lastPosition.x));
+                    lastPosition = Cesium.Cartesian2.clone(currentPosition);
+                }
+
+            }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+        }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+        handler.setInputAction(function() {
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+            currentPosition = lastPosition = undefined;
+        }, Cesium.ScreenSpaceEventType.LEFT_UP);
+
+
+
+        // 恢复成正常状态
+        recover = function(){
+            currentPosition = lastPosition = undefined;
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOWN);
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_UP);
+            viewer.scene.screenSpaceCameraController.enableRotate = true;
+            viewer.scene.screenSpaceCameraController.enableTranslate = true;
+            viewer.scene.screenSpaceCameraController.enableTilt = true;
+            viewer.scene.screenSpaceCameraController.enableLook = true;
+        }
+
+
+//Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+</script>
+</body>
+</html>

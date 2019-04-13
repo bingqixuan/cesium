@@ -1,55 +1,66 @@
-/*
- * @LastEditors: bingqixuan
- * @Date: 2019-03-27 18:17:10
- * @LastEditTime: 2019-03-29 16:09:47
- */
-
- define([
-    '../Core/Cartesian2',
+define([
     '../Core/defaultValue',
     '../Core/defined',
+    '../Core/defineProperties',
     '../Core/DeveloperError',
     '../Core/GeometryInstance',
     '../Core/PixelFormat',
     '../Core/Rectangle',
     '../Core/RectangleGeometry',
-    '../Core/Resource',
-    '../Scene/EllipsoidSurfaceAppearance',
     '../Scene/Material',
+    '../Scene/MaterialAppearance',
     '../Scene/Primitive',
-    '../Scene/PrimitiveCollection',
+    '../Renderer/Framebuffer',
     '../Renderer/PixelDatatype',
     '../Renderer/Sampler',
     '../Renderer/Texture',
     '../Renderer/TextureMagnificationFilter',
-    '../Renderer/TextureMinificationFilter'
- ],function(
-    Cartesian2,
+    '../Renderer/TextureMinificationFilter',
+    '../Renderer/TextureWrap'
+],function(
     defaultValue,
     defined,
+    defineProperties,
     DeveloperError,
     GeometryInstance,
     PixelFormat,
     Rectangle,
     RectangleGeometry,
-    Resource,
-    EllipsoidSurfaceAppearance,
     Material,
+    MaterialAppearance,
     Primitive,
-    PrimitiveCollection,
+    Framebuffer,
     PixelDatatype,
     Sampler,
     Texture,
     TextureMagnificationFilter,
-    TextureMinificationFilter
- ){
+    TextureMinificationFilter,
+    TextureWrap
+){
+
     'use strict';
 
-    /**
-     * @description: 风可视化图层。采用彩色地图来显示每个像素处的风速(从数据集内插)；
-     * @param {type} options
-     * @return
-     */
+    var drawVert = "precision mediump float;\n\nattribute float a_index;\n\nuniform sampler2D u_particles;\nuniform float u_particles_res;\n\nvarying vec2 v_particle_pos;\n\nvoid main() {\n    vec4 color = texture2D(u_particles, vec2(\n        fract(a_index / u_particles_res),\n        floor(a_index / u_particles_res) / u_particles_res));\n\n    // decode current particle position from the pixel's RGBA value\n    v_particle_pos = vec2(\n        color.r / 255.0 + color.b,\n        color.g / 255.0 + color.a);\n\n    gl_PointSize = 1.0;\n    gl_Position = vec4(2.0 * v_particle_pos.x - 1.0, 1.0 - 2.0 * v_particle_pos.y, 0, 1);\n}\n";
+
+    var drawFrag = "precision mediump float;\n\nuniform sampler2D u_wind;\nuniform vec2 u_wind_min;\nuniform vec2 u_wind_max;\nuniform sampler2D u_color_ramp;\n\nvarying vec2 v_particle_pos;\n\nvoid main() {\n    vec2 velocity = mix(u_wind_min, u_wind_max, texture2D(u_wind, v_particle_pos).rg);\n    float speed_t = length(velocity) / length(u_wind_max);\n\n    // color ramp is encoded in a 16x16 texture\n    vec2 ramp_pos = vec2(\n        fract(16.0 * speed_t),\n        floor(16.0 * speed_t) / 16.0);\n\n    gl_FragColor = texture2D(u_color_ramp, ramp_pos);\n}\n";
+
+    var quadVert = "precision mediump float;\n\nattribute vec2 a_pos;\n\nvarying vec2 v_tex_pos;\n\nvoid main() {\n    v_tex_pos = a_pos;\n    gl_Position = vec4(1.0 - 2.0 * a_pos, 0, 1);\n}\n";
+
+    var screenFrag = "precision mediump float;\n\nuniform sampler2D u_screen;\nuniform float u_opacity;\n\nvarying vec2 v_tex_pos;\n\nvoid main() {\n    vec4 color = texture2D(u_screen, 1.0 - v_tex_pos);\n    // a hack to guarantee opacity fade out even with a value close to 1.0\n    gl_FragColor = vec4(floor(255.0 * color * u_opacity) / 255.0);\n}\n";
+
+    var updateFrag = "precision highp float;\n\nuniform sampler2D u_particles;\nuniform sampler2D u_wind;\nuniform vec2 u_wind_res;\nuniform vec2 u_wind_min;\nuniform vec2 u_wind_max;\nuniform float u_rand_seed;\nuniform float u_speed_factor;\nuniform float u_drop_rate;\nuniform float u_drop_rate_bump;\n\nvarying vec2 v_tex_pos;\n\n// pseudo-random generator\nconst vec3 rand_constants = vec3(12.9898, 78.233, 4375.85453);\nfloat rand(const vec2 co) {\n    float t = dot(rand_constants.xy, co);\n    return fract(sin(t) * (rand_constants.z + t));\n}\n\n// wind speed lookup; use manual bilinear filtering based on 4 adjacent pixels for smooth interpolation\nvec2 lookup_wind(const vec2 uv) {\n    // return texture2D(u_wind, uv).rg; // lower-res hardware filtering\n    vec2 px = 1.0 / u_wind_res;\n    vec2 vc = (floor(uv * u_wind_res)) * px;\n    vec2 f = fract(uv * u_wind_res);\n    vec2 tl = texture2D(u_wind, vc).rg;\n    vec2 tr = texture2D(u_wind, vc + vec2(px.x, 0)).rg;\n    vec2 bl = texture2D(u_wind, vc + vec2(0, px.y)).rg;\n    vec2 br = texture2D(u_wind, vc + px).rg;\n    return mix(mix(tl, tr, f.x), mix(bl, br, f.x), f.y);\n}\n\nvoid main() {\n    vec4 color = texture2D(u_particles, v_tex_pos);\n    vec2 pos = vec2(\n        color.r / 255.0 + color.b,\n        color.g / 255.0 + color.a); // decode particle position from pixel RGBA\n\n    vec2 velocity = mix(u_wind_min, u_wind_max, lookup_wind(pos));\n    float speed_t = length(velocity) / length(u_wind_max);\n\n    // take EPSG:4236 distortion into account for calculating where the particle moved\n    float distortion = cos(radians(pos.y * 180.0 - 90.0));\n    vec2 offset = vec2(velocity.x / distortion, -velocity.y) * 0.0001 * u_speed_factor;\n\n    // update particle position, wrapping around the date line\n    pos = fract(1.0 + pos + offset);\n\n    // a random seed to use for the particle drop\n    vec2 seed = (pos + v_tex_pos) * u_rand_seed;\n\n    // drop rate is a chance a particle will restart at random position, to avoid degeneration\n    float drop_rate = u_drop_rate + speed_t * u_drop_rate_bump;\n    float drop = step(1.0 - drop_rate, rand(seed));\n\n    vec2 random_pos = vec2(\n        rand(seed + 1.3),\n        rand(seed + 2.1));\n    pos = mix(pos, random_pos, drop);\n\n    // encode the new particle position back into RGBA\n    gl_FragColor = vec4(\n        fract(pos * 255.0),\n        floor(pos * 255.0) / 255.0);\n}\n";
+
+    var defaultRampColors = {
+        0.0: '#3288bd',
+        0.1: '#66c2a5',
+        0.2: '#abdda4',
+        0.3: '#e6f598',
+        0.4: '#fee08b',
+        0.5: '#fdae61',
+        0.6: '#f46d43',
+        1.0: '#d53e4f'
+    };
+
     function WindLayer(options){
         options = defaultValue(options, defaultValue.EMPTY_OBJECT);
         if (!defined(options.scene)) {
@@ -57,186 +68,180 @@
         }
         this._scene = options.scene;
 
-        if (!defined(options.data)) {
-            throw new DeveloperError('options.data is required.');
-        }
-        this._data = options.data;
-        this._windLayer = this._scene.primitives.add(new PrimitiveCollection());
+        this.fadeOpacity = 0.996; // 每一帧的粒子轨迹消退的速率
+        this.speedFactor = 0.25; // 粒子移动的速率
+        this.dropRate = 0.003; // 粒子移动到随机位置的频率
+        this.dropRateBump = 0.01; // 相对于单个粒子的速度的下降速率增加
+        this._numParticles = undefined; // 粒子数量
 
-        if (typeof this._data === 'string') {
-            Resource.fetchJson({
-                url: this._data
-            }).then((json) => {
-                this._data = json;
-                this._createFill();
-            });
-        }else{
-            this._createFill();
-        }
-
-    }
-
-    WindLayer.prototype._createFill = function(){
-        var ramp = createColorRamp(this._scene);
-        var appearance = new EllipsoidSurfaceAppearance({
-            aboveGround: false,
-            material: new Material({
-                fabric: {
-                    uniforms: {
-                        u_wind: this._data.tiles[0],
-                        u_wind_res: new Cartesian2(this._data.width, this._data.height),
-                        u_wind_min: new Cartesian2(this._data.uMin, this._data.vMin),
-                        u_wind_max: new Cartesian2(this._data.uMax, this._data.vMax),
-                        u_color_ramp: ramp
-                    },
-                    materials: {
-                        bumpMap: {
-                            type: 'BumpMap'
-                            // uniforms: {
-                            //     image: '../images/earthbump1k.jpg'
-                            // }
-                        }
-                    },
-                    source: 'czm_material czm_getMaterial(czm_materialInput materialInput) { \n' +
-                        '    czm_material material = czm_getDefaultMaterial(materialInput); \n' +
-                        // '    vec4 color; \n' +
-                        // '    float heightValue = texture2D(heightField, materialInput.st).r; \n' +
-                        // '    color.rgb = mix(vec3(0.2, 0.6, 0.2), vec3(1.0, 0.5, 0.2), heightValue); \n' +
-                        // '    color.a = (1.0 - texture2D(image, materialInput.st).r) * 0.7; \n' +
-                        '    vec2 px = 1.0 / u_wind_res; \n' +
-                        '    vec2 vc = (floor(materialInput.st * u_wind_res)) * px; \n' +
-                        '    vec2 f = fract(materialInput.st * u_wind_res); \n' +
-                        '    vec2 tl = texture2D(u_wind, vc).rg; \n' +
-                        '    vec2 tr = texture2D(u_wind, vc + vec2(px.x, 0)).rg; \n' +
-                        '    vec2 bl = texture2D(u_wind, vc + vec2(0, px.y)).rg; \n' +
-                        '    vec2 br = texture2D(u_wind, vc + px).rg; \n' +
-                        '    vec2 windSpeedRelative = mix(mix(tl, tr, f.x), mix(bl, br, f.x), f.y); \n' +
-                        '    vec2 windSpeed = mix(u_wind_min, u_wind_max, windSpeedRelative); \n' +
-                        '    float speed_t = length(windSpeed / length(u_wind_max)); \n' +
-                        '    vec2 ramp_pos = vec2(fract(16.0 * speed_t), floor(16.0 * speed_t) / 16.0); \n' +
-                        '    vec4 color = texture2D(u_color_ramp, ramp_pos); \n' +
-                        '    material.diffuse = color.rgb; \n' +
-                        '    material.alpha = color.a; \n' +
-                        // '    material.normal = bumpMap.normal; \n' +
-                        // '    material.specular = step(0.1, heightValue); \n' + // Specular mountain tops
-                        // '    material.shininess = 8.0; \n' + // Sharpen highlight
-                        '    return material; \n' +
-                        '} \n'
-                }
-            })
-            // fragmentShaderSource: windFS
-        });
-        this._windLayer.add(new Primitive({
+        this._primitive = this._scene.primitives.add(new Primitive({
             geometryInstances: new GeometryInstance({
                 geometry: new RectangleGeometry({
                     rectangle: Rectangle.fromDegrees(-180.0, -90.0, 180.0, 90.0),
-                    vertexFormat: EllipsoidSurfaceAppearance.VERTEX_FORMAT
+                    vertexFormat: MaterialAppearance.VERTEX_FORMAT
                 })
             }),
-            appearance: appearance,
+            appearance: new MaterialAppearance(),
             show: true
         }));
+
+        this.setColorRamp(defaultRampColors);
+        this.resize();
+    }
+    defineProperties(WindLayer.prototype, {
+
+        numParticles: {
+            get : function() {
+                return this._numParticles;
+            },
+            set : function(value) {
+                // 我们创建一个正方形纹理，其中每个像素将含有一个编码为RGBA的粒子位置
+                var particleRes = this.particleStateResolution = Math.ceil(Math.sqrt(value));
+                this._numParticles = particleRes * particleRes;
+
+                var particleState = new Uint8Array(this._numParticles * 4);
+                for (var i = 0; i < particleState.length; i++) {
+                    particleState[i] = Math.floor(Math.random() * 256); // 随机初始粒子位置
+                }
+                // 纹理保存当前和下一帧的粒子状态
+                this.particleStateTexture0 = createTexture(this._scene.context, TextureMinificationFilter.NEAREST, TextureMagnificationFilter.NEAREST, particleState, particleRes, particleRes);
+                this.particleStateTexture1 = createTexture(this._scene.context, TextureMinificationFilter.NEAREST, TextureMagnificationFilter.NEAREST, particleState, particleRes, particleRes);
+
+                var particleIndices = new Float32Array(this._numParticles);
+                for (var i$1 = 0; i$1 < this._numParticles; i$1++) { particleIndices[i$1] = i$1; }
+                this.particleIndices = particleIndices;
+            }
+        },
+
+    })
+
+    WindLayer.prototype.resize = function() {
+        var width = 800, height = 800;
+        var emptyPixels = new Uint8Array(width * height * 4);
+        // 屏幕纹理用于保存前一帧和当前帧的屏幕绘制
+        this.backgroundTexture = createTexture(this._scene.context, TextureMinificationFilter.NEAREST, TextureMagnificationFilter.NEAREST, emptyPixels, width, height);
+        this.screenTexture = createTexture(this._scene.context, TextureMinificationFilter.NEAREST, TextureMagnificationFilter.NEAREST, emptyPixels, width, height);
     };
 
+    WindLayer.prototype.setColorRamp = function(colors) {
+        // 查找纹理，根据粒子的速度为其着色
+        this.colorRampTexture = createTexture(this._scene.context, TextureMinificationFilter.LINEAR, TextureMagnificationFilter.LINEAR, getColorRamp(colors), 16, 16);
+    };
 
-    WindLayer.prototype._createParticle = function(){
-        this._numParticles = 256 * 256;
-        var particleState = new Uint8Array(this._numParticles * 4);
-        for (var i = 0; i < particleState.length; i++) {
-            particleState[i] = Math.floor(Math.random() * 256); // 随机初始化粒子位置
-        }
+    WindLayer.prototype.setWind = function(windData) {
+        this.windData = windData;
+        this.windTexture = createTexture(this._scene.context, TextureMinificationFilter.LINEAR, TextureMagnificationFilter.LINEAR, windData.image, 360, 180);
+    };
 
-        // 创建两个纹理保存当前帧和下一帧的粒子状态
-        this._particleTexture0 = new Texture({
-            context: this._scene.context,
-            width: 256,
-            height: 256,
-            pixelFormat: PixelFormat.RGBA,
-            pixelDatatype: PixelDatatype.UNSIGNED_BUTE,
-            sampler: new Sampler({
-                wrapS: TextureWrap.CLAMP_TO_EDGE,  // 默认值
-                wrapT: TextureWrap.CLAMP_TO_EDGE,
-                minificationFilter: TextureMinificationFilter.NEAREST,
-                magnificationFilter: TextureMagnificationFilter.NEAREST
-            })
-        });
-        this._particleTexture0.copyFrom({
-            width : 256,
-            height : 256,
-            arrayBufferView : particleState
-        });
-
-        this._particleTexture1 = new Texture({
-            context: this._scene.context,
-            width: 256,
-            height: 256,
-            pixelFormat: PixelFormat.RGBA,
-            pixelDatatype: PixelDatatype.UNSIGNED_BUTE,
-            sampler: new Sampler({
-                wrapS: TextureWrap.CLAMP_TO_EDGE,  // 默认值
-                wrapT: TextureWrap.CLAMP_TO_EDGE,
-                minificationFilter: TextureMinificationFilter.NEAREST,
-                magnificationFilter: TextureMagnificationFilter.NEAREST
-            })
-        });
-        this._particleTexture1.copyFrom({
-            width : 256,
-            height : 256,
-            arrayBufferView : particleState
-        });
-
-        var particleIndices = new Float32Array(this._numParticles);
-	    for (var i$1 = 0; i$1 < this._numParticles; i$1++) { particleIndices[i$1] = i$1; }
+    WindLayer.prototype.draw = function(){
+        this.drawScreen();
+        //this.updateParticles();
     }
 
-    WindLayer.prototype._particleUpdate = function(){
-        var framebuffer = new Framebuffer({
-            context: this._scene.context,
-            colorTextures: [this._particleTexture1],
-            destroyAttachments: false
-        });
+    WindLayer.prototype.drawScreen = function() {
+        var context = this._scene.context;
+        // 将屏幕绘制到临时framebuffer中，以便在下一帧中将其保留为背景
+        this.framebuffer = bindFramebuffer(context, this.screenTexture);
 
-        // 交换粒子状态纹理
-        var temp = this._particleTexture0;
-	    this._particleTexture0 = this._particleTexture1;
-	    this._particleTexture1 = temp;
-    }
+        this.drawTexture(this.backgroundTexture, this.fadeOpacity);
+        // this.drawParticles();
+
+        // bindFramebuffer(gl, null);
+        // // enable blending to support drawing on top of an existing background (e.g. a map)
+        // gl.enable(gl.BLEND);
+        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        // this.drawTexture(this.screenTexture, 1.0);
+        // gl.disable(gl.BLEND);
 
 
-    function createColorRamp(scene) {
-        var colorData =
-                '50,136,189,255,51,137,188,255,52,138,187,255,53,140,187,255,55,141,186,255,56,143,186,255,57,144,185,255,58,146,184,255,60,147,184,255,61,148,183,255,62,150,183,255,64,151,182,255,65,153,181,255,66,154,181,255,67,156,180,255,69,157,180,255,70,158,179,255,71,160,178,255,73,161,178,255,74,163,177,255,75,164,177,255,76,166,176,255,78,167,175,255,79,168,175,255,80,170,174,255,82,171,174,255,83,173,173,255,84,174,173,255,85,176,172,255,87,177,171,255,88,178,171,255,89,180,170,255,91,181,170,255,92,183,169,255,93,184,168,255,94,186,168,255,96,187,167,255,97,188,167,255,98,190,166,255,100,191,165,255,101,193,165,255,102,194,164,255,104,194,164,255,106,195,164,255,107,196,164,255,109,196,164,255,111,197,164,255,112,198,164,255,114,198,164,255,116,199,164,255,118,200,164,255,119,200,164,255,121,201,164,255,123,202,164,255,124,202,164,255,126,203,164,255,128,204,164,255,129,204,164,255,131,205,164,255,133,206,164,255,135,206,164,255,136,207,164,255,138,208,164,255,140,208,164,255,141,209,164,255,143,210,164,255,145,210,164,255,146,211,164,255,148,212,164,255,150,212,164,255,152,213,164,255,153,214,164,255,155,214,164,255,157,215,164,255,158,216,164,255,160,216,164,255,162,217,164,255,163,218,164,255,165,218,164,255,167,219,164,255,169,220,164,255,170,220,164,255,172,221,163,255,173,222,163,255,175,222,163,255,176,223,162,255,178,223,162,255,179,224,162,255,181,225,161,255,182,225,161,255,183,226,161,255,185,226,161,255,186,227,160,255,188,228,160,255,189,228,160,255,191,229,159,255,192,229,159,255,194,230,159,255,195,230,159,255,197,231,158,255,198,232,158,255,199,232,158,255,201,233,157,255,202,233,157,255,204,234,157,255,205,235,156,255,207,235,156,255,208,236,156,255,210,236,156,255,211,237,155,255,213,238,155,255,214,238,155,255,215,239,154,255,217,239,154,255,218,240,154,255,220,241,153,255,221,241,153,255,223,242,153,255,224,242,153,255,226,243,152,255,227,244,152,255,229,244,152,255,230,244,151,255,230,244,151,255,231,243,151,255,231,243,150,255,232,242,150,255,233,242,150,255,233,241,149,255,234,241,149,255,234,240,149,255,235,240,149,255,236,239,148,255,236,239,148,255,237,238,148,255,237,238,147,255,238,237,147,255,239,237,147,255,239,236,146,255,240,236,146,255,240,235,146,255,241,234,145,255,242,234,145,255,242,233,145,255,243,233,144,255,243,232,144,255,244,232,144,255,244,231,143,255,245,231,143,255,246,230,143,255,246,230,142,255,247,229,142,255,247,229,142,255,248,228,141,255,249,228,141,255,249,227,141,255,250,227,140,255,250,226,140,255,251,226,140,255,252,225,140,255,252,225,139,255,253,224,139,255,253,224,139,255,253,223,138,255,253,221,137,255,253,220,136,255,253,219,135,255,253,218,134,255,253,216,133,255,253,215,131,255,253,214,130,255,253,213,129,255,253,211,128,255,253,210,127,255,253,209,126,255,253,208,125,255,253,207,124,255,253,205,123,255,253,204,122,255,253,203,121,255,253,202,120,255,253,200,119,255,253,199,118,255,253,198,117,255,253,197,116,255,253,195,115,255,253,194,114,255,253,193,113,255,253,192,112,255,253,191,111,255,253,189,110,255,253,188,109,255,253,187,108,255,253,186,107,255,253,184,106,255,253,183,105,255,253,182,104,255,253,181,102,255,253,179,101,255,253,178,100,255,253,177,99,255,253,176,98,255,253,174,97,255,252,173,96,255,252,172,96,255,252,170,95,255,252,168,94,255,252,167,93,255,251,165,93,255,251,164,92,255,251,162,91,255,251,160,90,255,250,159,90,255,250,157,89,255,250,156,88,255,250,154,87,255,250,152,87,255,249,151,86,255,249,149,85,255,249,148,85,255,249,146,84,255,248,144,83,255,248,143,82,255,248,141,82,255,248,140,81,255,248,138,80,255,247,136,79,255,247,135,79,255,247,133,78,255,247,131,77,255,246,130,76,255,246,128,76,255,246,127,75,255,246,125,74,255,246,123,73,255,245,122,73,255,245,120,72,255,245,119,71,255,245,117,70,255,244,115,70,255,244,114,69,255,244,112,68,255,244,111,67,255,244,109,67,255,243,108,67,255,243,108,67,255,243,108,67,255,243,107,67,255,243,107,67,255,242,107,67,255,242,107,67,255,242,106,67,255,242,106,67,255,242,106,67,255,241,105,67,255,241,105,67,255';
+        var fs = 'uniform float u_fadeOpacity; \n' +
+            'uniform sampler2D u_colorRamp; \n' +
+            'varying vec2 v_st; \n' +
+            'void main(){ \n' +
+            '   vec4 color = texture2D(u_colorRamp, v_st); \n' +
+            '   gl_FragColor = color; \n' +
+            '} \n';
+        var appearance = new MaterialAppearance({
+            flat: true,
+            fragmentShaderSource: fs
+        })
+        appearance.uniforms = {
+            u_colorRamp: this.backgroundTexture,
+            u_fadeOpacity: this.fadeOpacity
+        };
+        this._primitive.appearance = appearance;
 
-        var colorRampData = new Uint8ClampedArray(256 * 4);
-        var colorArr = colorData.split(',');
-        for (var i = 0; i < 256 * 4; i++) {
-            colorRampData[i] = colorArr[i];
-        }
+        // save the current screen as the background for the next frame
+        var temp = this.backgroundTexture;
+        this.backgroundTexture = this.screenTexture;
+        this.screenTexture = temp;
+    };
 
+    WindLayer.prototype.drawTexture = function(texture, opacity) {
+        var gl = this.gl;
+        var program = this.screenProgram;
+        gl.useProgram(program.program);
+
+        bindAttribute(gl, this.quadBuffer, program.a_pos, 2);
+        bindTexture(gl, texture, 2);
+        gl.uniform1i(program.u_screen, 2);
+        gl.uniform1f(program.u_opacity, opacity);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    };
+
+    function getColorRamp(colors) {
         var canvas = document.createElement('canvas');
         var ctx = canvas.getContext('2d');
 
-        canvas.width = 16;
-        canvas.height = 16;
-        var imageData = new ImageData(colorRampData, 16, 16);
-        ctx.putImageData(imageData, 0, 0);
+        canvas.width = 256;
+        canvas.height = 1;
 
-        var colorTexture = new Texture({
-            context: scene.context,
-            width: 16,
-            height: 16,
+        var gradient = ctx.createLinearGradient(0, 0, 256, 0);
+        for (var stop in colors) {
+            gradient.addColorStop(+stop, colors[stop]);
+        }
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 256, 1);
+
+        return new Uint8Array(ctx.getImageData(0, 0, 256, 1).data);
+    }
+
+    function createTexture(context, minificationFilter, magnificationFilter, data, width, height){
+        var texture = new Texture({
+            context: context,
+            width : width,
+            height : height,
             pixelFormat: PixelFormat.RGBA,
             pixelDatatype: PixelDatatype.UNSIGNED_BUTE,
             sampler: new Sampler({
-                // wrapS: TextureWrap.CLAMP_TO_EDGE,  // 默认值
-                // wrapT: TextureWrap.CLAMP_TO_EDGE,
-                minificationFilter: TextureMinificationFilter.NEAREST,
-                magnificationFilter: TextureMagnificationFilter.NEAREST
+                wrapS: TextureWrap.CLAMP_TO_EDGE,  // 默认值
+                wrapT: TextureWrap.CLAMP_TO_EDGE,
+                minificationFilter: minificationFilter,
+                magnificationFilter: magnificationFilter
             })
         });
-        colorTexture.copyFrom(canvas);
-        return canvas;
+        if (data instanceof Uint8Array) {
+            texture.copyFrom({
+                width : width,
+                height : height,
+                arrayBufferView : data
+            });
+        } else {
+            texture.copyFrom(data);
+        }
+
+        return texture;
+    }
+
+    function bindFramebuffer(context, texture) {
+        return new Framebuffer({
+            context: context,
+            colorTextures: [texture],
+            destroyAttachments: false
+        });
     }
 
     return WindLayer;
- });
+})
