@@ -143,7 +143,7 @@ define([
         // 将屏幕绘制到临时framebuffer中，以便在下一帧中将其保留为背景
         this.framebuffer = bindFramebuffer(context, this.screenTexture);
 
-        this.drawTexture(this.backgroundTexture, this.fadeOpacity);
+        // this.drawTexture(this.backgroundTexture, this.fadeOpacity);
         // this.drawParticles();
 
         // bindFramebuffer(gl, null);
@@ -166,7 +166,7 @@ define([
             fragmentShaderSource: fs
         })
         appearance.uniforms = {
-            u_colorRamp: this.backgroundTexture,
+            u_colorRamp: this.colorRampTexture,
             u_fadeOpacity: this.fadeOpacity
         };
         this._primitive.appearance = appearance;
@@ -188,6 +188,45 @@ define([
         gl.uniform1f(program.u_opacity, opacity);
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
+    };
+
+    WindLayer.prototype.drawParticles = function() {
+        var geometry = new Geometry({
+            attributes : {
+                posIndex : new GeometryAttribute({
+                    componentDatatype : ComponentDatatype.FLOAT,
+                    componentsPerAttribute : 1,
+                    values : this.particleIndices
+                })
+            },
+            indices : Uint32Array.from(this.particleIndices),
+            primitiveType : PrimitiveType.POINTS
+        });
+
+        var appearance = new MaterialAppearance({
+            flat : true,
+            translucent : false,
+            vertexShaderSource: tripVS,
+            fragmentShaderSource: tripFS
+        });
+
+        appearance.uniforms = {
+            u_wind: this.windTexture,
+            u_particles: this.particleStateTexture0,
+            u_color_ramp: this.colorRampTexture,
+            u_particles_res: this.particleStateResolution,
+            u_wind_min: new Cartesian2(this.windData.uMin, this.windData.vMin),
+            u_wind_max: new Cartesian2(this.windData.uMax, this.windData.vMax)
+        };
+
+        this._particlePrimitive = this._scene.primitives.add(new Primitive({
+            geometryInstances: new GeometryInstance({
+                geometry: geometry
+            }),
+            appearance: appearance,
+            allowPicking: false,
+            asynchronous: false
+        }));
     };
 
     function getColorRamp(colors) {
