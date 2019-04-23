@@ -255,6 +255,7 @@ define([
                 fs.defines.push('HIGHLIGHT_FILL_TILE');
             }
 
+            // 考虑多重纹理
             var computeDayColor = '\
     vec4 computeDayColor(vec4 initialColor, vec3 textureCoordinates)\n\
     {\n\

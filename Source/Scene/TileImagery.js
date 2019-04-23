@@ -40,6 +40,7 @@ define([
 
     /**
      * Processes the load state machine for this instance.
+     * TileImagery调用Imagery实现影像切片的相关调度
      *
      * @param {Tile} tile The tile to which this instance belongs.
      * @param {FrameState} frameState The frameState.

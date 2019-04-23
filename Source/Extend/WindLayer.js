@@ -1,4 +1,5 @@
 define([
+    '../Core/Cartesian2',
     '../Core/defaultValue',
     '../Core/defined',
     '../Core/defineProperties',
@@ -10,6 +11,7 @@ define([
     '../Scene/Material',
     '../Scene/MaterialAppearance',
     '../Scene/Primitive',
+    '../Shaders/Extend/WindFS',
     '../Renderer/Framebuffer',
     '../Renderer/PixelDatatype',
     '../Renderer/Sampler',
@@ -18,6 +20,7 @@ define([
     '../Renderer/TextureMinificationFilter',
     '../Renderer/TextureWrap'
 ],function(
+    Cartesian2,
     defaultValue,
     defined,
     defineProperties,
@@ -29,6 +32,7 @@ define([
     Material,
     MaterialAppearance,
     Primitive,
+    WindFS,
     Framebuffer,
     PixelDatatype,
     Sampler,
@@ -39,6 +43,32 @@ define([
 ){
 
     'use strict';
+
+    var particleVS = "attribute vec3 posIndex;\n\
+    attribute float batchId;\n\
+    uniform sampler2D u_particles;\n\
+    uniform float u_particles_res;\n\
+    \n\
+    varying vec2 v_particle_pos;\n\
+    \n\
+    void main()\n\
+    {\n\
+        vec4 color = texture2D(u_particles, vec2(\n\
+            fract(posIndex / u_particles_res),\n\
+            floor(posIndex / u_particles_res) / u_particles_res));\n\
+            \n\
+        // decode current particle position from the pixel's RGBA value\n\
+        v_particle_pos = vec2(\n\
+            color.r / 255.0 + color.b,\n\
+            color.g / 255.0 + color.a);\n\
+            \n\
+        gl_PointSize = 1.0;\n\
+        gl_Position = vec4(2.0 * v_particle_pos.x - 1.0, 1.0 - 2.0 * v_particle_pos.y, 0, 1);\n\
+    \n\
+    \n\
+        gl_Position = czm_modelViewProjectionRelativeToEye * p;\n\
+    }\n\
+    ";
 
     var drawVert = "precision mediump float;\n\nattribute float a_index;\n\nuniform sampler2D u_particles;\nuniform float u_particles_res;\n\nvarying vec2 v_particle_pos;\n\nvoid main() {\n    vec4 color = texture2D(u_particles, vec2(\n        fract(a_index / u_particles_res),\n        floor(a_index / u_particles_res) / u_particles_res));\n\n    // decode current particle position from the pixel's RGBA value\n    v_particle_pos = vec2(\n        color.r / 255.0 + color.b,\n        color.g / 255.0 + color.a);\n\n    gl_PointSize = 1.0;\n    gl_Position = vec4(2.0 * v_particle_pos.x - 1.0, 1.0 - 2.0 * v_particle_pos.y, 0, 1);\n}\n";
 
@@ -86,7 +116,7 @@ define([
         }));
 
         this.setColorRamp(defaultRampColors);
-        this.resize();
+        // this.resize();
     }
     defineProperties(WindLayer.prototype, {
 
@@ -107,9 +137,9 @@ define([
                 this.particleStateTexture0 = createTexture(this._scene.context, TextureMinificationFilter.NEAREST, TextureMagnificationFilter.NEAREST, particleState, particleRes, particleRes);
                 this.particleStateTexture1 = createTexture(this._scene.context, TextureMinificationFilter.NEAREST, TextureMagnificationFilter.NEAREST, particleState, particleRes, particleRes);
 
-                var particleIndices = new Float32Array(this._numParticles);
-                for (var i$1 = 0; i$1 < this._numParticles; i$1++) { particleIndices[i$1] = i$1; }
-                this.particleIndices = particleIndices;
+                // var particleIndices = new Float32Array(this._numParticles);
+                // for (var i$1 = 0; i$1 < this._numParticles; i$1++) { particleIndices[i$1] = i$1; }
+                // this.particleIndices = particleIndices;
             }
         },
 
@@ -134,8 +164,9 @@ define([
     };
 
     WindLayer.prototype.draw = function(){
-        this.drawScreen();
+        // this.drawScreen();
         //this.updateParticles();
+        this.drawParticles();
     }
 
     WindLayer.prototype.drawScreen = function() {
@@ -190,7 +221,52 @@ define([
         gl.drawArrays(gl.TRIANGLES, 0, 6);
     };
 
-    WindLayer.prototype.drawParticles = function() {
+    WindLayer.prototype.drawParticles = function(){
+        var appearance = new MaterialAppearance({
+            flat: true,
+            fragmentShaderSource: WindFS
+        })
+        appearance.uniforms = {
+            u_wind: this.windTexture,
+            u_particles: this.particleStateTexture0,
+            u_color_ramp: this.colorRampTexture,
+            u_particles_res: this.particleStateResolution,
+            u_wind_min: new Cartesian2(this.windData.uMin, this.windData.vMin),
+            u_wind_max: new Cartesian2(this.windData.uMax, this.windData.vMax),
+            u_wind_res: new Cartesian2(this.windData.width, this.windData.height),
+            u_speed_factor: this.speedFactor,
+            u_drop_rate: this.dropRate,
+            u_drop_rate_bump: this.dropRateBump,
+            u_rand_seed: Math.random()
+        };
+        this._primitive.appearance = appearance;
+    }
+
+    WindLayer.prototype.updateParticles = function(){
+        var context = this._scene.context;
+        this.framebuffer = bindFramebuffer(context, this.particleStateTexture1);
+        // bindFramebuffer(gl, this.framebuffer, this.particleStateTexture1);
+        this._primitive.appearance.uniforms = {
+            u_wind: this.windTexture,
+            u_particles: this.particleStateTexture0,
+            u_color_ramp: this.colorRampTexture,
+            u_particles_res: this.particleStateResolution,
+            u_wind_min: new Cartesian2(this.windData.uMin, this.windData.vMin),
+            u_wind_max: new Cartesian2(this.windData.uMax, this.windData.vMax),
+            u_wind_res: new Cartesian2(this.windData.width, this.windData.height),
+            u_speed_factor: this.speedFactor,
+            u_drop_rate: this.dropRate,
+            u_drop_rate_bump: this.dropRateBump,
+            u_rand_seed: Math.random()
+        };
+
+        // 交换粒子状态纹理，让新的变成当前的
+        var temp = this.particleStateTexture0;
+        this.particleStateTexture0 = this.particleStateTexture1;
+        this.particleStateTexture1 = temp;
+    }
+
+    WindLayer.prototype.drawParticles2 = function() {
         var geometry = new Geometry({
             attributes : {
                 posIndex : new GeometryAttribute({
@@ -206,8 +282,8 @@ define([
         var appearance = new MaterialAppearance({
             flat : true,
             translucent : false,
-            vertexShaderSource: tripVS,
-            fragmentShaderSource: tripFS
+            vertexShaderSource: particleVS,
+            fragmentShaderSource: particleFS
         });
 
         appearance.uniforms = {

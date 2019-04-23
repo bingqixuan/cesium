@@ -84,12 +84,15 @@ define([
         return this.referenceCount;
     };
 
+    // 基于状态的影像数据调度
     Imagery.prototype.processStateMachine = function(frameState, needGeographicProjection, skipLoading) {
+        // 如果该影像切片没有下载，则下载
         if (this.state === ImageryState.UNLOADED && !skipLoading) {
             this.state = ImageryState.TRANSITIONING;
             this.imageryLayer._requestImagery(this);
         }
 
+        // 下载后创建对应的纹理
         if (this.state === ImageryState.RECEIVED) {
             this.state = ImageryState.TRANSITIONING;
             this.imageryLayer._createTexture(frameState.context, this);
@@ -100,6 +103,7 @@ define([
         // is fine initially, but the geographic one is needed later.
         var needsReprojection = this.state === ImageryState.READY && needGeographicProjection && !this.texture;
 
+        // 进行投影换算，纠偏
         if (this.state === ImageryState.TEXTURE_LOADED || needsReprojection) {
             this.state = ImageryState.TRANSITIONING;
             this.imageryLayer._reprojectTexture(frameState, this, needGeographicProjection);

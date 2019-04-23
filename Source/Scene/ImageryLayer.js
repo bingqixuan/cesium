@@ -478,6 +478,7 @@ define([
     /**
      * Create skeletons for the imagery tiles that partially or completely overlap a given terrain
      * tile.
+     * 计算每个地形的tile对应哪些Imagery Tile
      *
      * @private
      *
@@ -522,6 +523,7 @@ define([
         // the geometry tile.  The ImageryProvider and ImageryLayer both have the
         // opportunity to constrain the rectangle.  The imagery TilingScheme's rectangle
         // always fully contains the ImageryProvider's rectangle.
+        // 计算这个imageryProvider覆盖地形瓦片的影像范围
         var imageryBounds = Rectangle.intersection(imageryProvider.rectangle, this._rectangle, imageryBoundsScratch);
         var rectangle = Rectangle.intersection(tile.rectangle, imageryBounds, tileImageryBoundsScratch);
 
@@ -652,6 +654,7 @@ define([
 
         var initialMinV = minV;
 
+        // 通过两个for循环，遍历TileCoordinates，也就获取到该地形Tile所需要的影像切片了
         for ( var i = northwestTileCoordinates.x; i <= southeastTileCoordinates.x; i++) {
             minU = maxU;
 
@@ -694,8 +697,11 @@ define([
                     minV = 0.0;
                 }
 
+                // 判断该影像切片是否已经创建了
+                // 因为有可能出现相邻两个地形的Tile，一个需要影像切片的上半部分，一个需要下半部分
                 var texCoordsRectangle = new Cartesian4(minU, minV, maxU, maxV);
                 var imagery = this.getImageryFromCache(i, j, imageryLevel);
+                // 引用计数，将需要的imagery绑定到对应的GlobeSurfaceTile上
                 surfaceTile.imagery.splice(insertionPoint, 0, new TileImagery(imagery, texCoordsRectangle, useWebMercatorT));
                 ++insertionPoint;
             }
@@ -707,6 +713,8 @@ define([
     /**
      * Calculate the translation and scale for a particular {@link TileImagery} attached to a
      * particular terrain tile.
+     * 一个纹理纠偏的处理。
+     * 有可能一个地形切片各占两个影像切片的一部分，这样，纹理对应地形切片的起始点就会有一个偏移和缩放的处理，保质两者匹配吻合。
      *
      * @private
      *
@@ -730,6 +738,7 @@ define([
 
         var scaleX = terrainWidth / imageryRectangle.width;
         var scaleY = terrainHeight / imageryRectangle.height;
+        // xy为偏移，zw为缩放
         return new Cartesian4(
                 scaleX * (terrainRectangle.west - imageryRectangle.west) / terrainWidth,
                 scaleY * (terrainRectangle.south - imageryRectangle.south) / terrainHeight,
@@ -1214,6 +1223,7 @@ define([
 
         var webMercatorT = float32ArrayScratch;
 
+        // 经纬度下对应的uv值
         var outputIndex = 0;
         for (var webMercatorTIndex = 0; webMercatorTIndex < 64; ++webMercatorTIndex) {
             var fraction = webMercatorTIndex / 63.0;

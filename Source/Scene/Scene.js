@@ -3277,11 +3277,13 @@ define([
         passState.scissorTest = undefined;
         passState.viewport = BoundingRectangle.clone(viewport, passState.viewport);
 
+        // 关于地球的影像和地形加载，都是在globe的beginFrame和endFrame之间完成的
         if (defined(scene.globe)) {
             scene.globe.beginFrame(frameState);
         }
 
         updateEnvironment(scene);
+        // 负责数据的调度，创建一个个task，不负责数据的加载和维护
         updateAndExecuteCommands(scene, passState, backgroundColor);
         resolveFramebuffers(scene, passState);
 

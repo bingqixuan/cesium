@@ -43,10 +43,15 @@
                 // })
             });
 
+            viewer.imageryLayers.removeAll();
+            viewer.scene.globe.baseColor = new Cesium.Color(0.0, 0.0, 0.0, 1.0);
+
 
             var wind = new Cesium.WindLayer({
                 scene: viewer.scene
             })
+            wind.numParticles = 256;
+            // wind.numParticles = 65536;
 
             var windData = {
                 date: "2016-11-20T00:00Z",
@@ -65,6 +70,9 @@
             windImage.onload = function () {
                 wind.setWind(windData);
                 wind.draw();
+                viewer.scene.postRender.addEventListener(function(){
+                    // wind.updateParticles();
+                })
             };
 
             //Sandcastle_End
