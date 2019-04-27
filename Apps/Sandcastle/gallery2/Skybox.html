@@ -46,6 +46,15 @@
             }
         });
 
+
+        var tileset = new Cesium.Cesium3DTileset({ url: Cesium.IonResource.fromAssetId(6074) });
+        viewer.scene.primitives.add(tileset);
+        viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0.0, -1.0, 50.0));
+
+        viewer.imageryLayers.removeAll();
+        viewer.scene.backgroundColor = Cesium.Color.TRANSPARENT;
+        viewer.scene.globe.baseColor = Cesium.Color.TRANSPARENT;
+
 //Sandcastle_End
         Sandcastle.finishedLoading();
     }

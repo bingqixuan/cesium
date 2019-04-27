@@ -50,6 +50,7 @@ define([
      * The set of tiles to render is selected by projecting an estimate of the geometric error in a tile onto
      * the screen to estimate screen-space error, in pixels, which must be below a user-specified threshold.
      * The actual content of the tiles is arbitrary and is specified using a {@link QuadtreeTileProvider}.
+     * 用来维护整个地球的四叉树，每个Tile对应一个QuadTreeTile。QuadTreeTile只负责网格的维护，每一个网格对应的数据则有GlobeSurfaceTile管理
      *
      * @alias QuadtreePrimitive
      * @constructor
@@ -105,7 +106,7 @@ define([
         this._tileLoadQueueHigh = []; // high priority tiles are preventing refinement
         this._tileLoadQueueMedium = []; // medium priority tiles are being rendered
         this._tileLoadQueueLow = []; // low priority tiles were refined past or are non-visible parts of quads.
-        this._tileReplacementQueue = new TileReplacementQueue();
+        this._tileReplacementQueue = new TileReplacementQueue();  // 这个是一个双向链表，来统计所有加载进来的Tile
         this._levelZeroTiles = undefined;
         this._loadQueueTimeSlice = 5.0;
         this._tilesInvalidated = false;
@@ -447,6 +448,7 @@ define([
         }
 
         // Load/create resources for terrain and imagery. Prepare texture re-projections for the next frame.
+        // 为地形和影像加载/创建资源。为下一帧准备纹理重投影。
         processTileLoadQueue(this, frameState);
         updateHeights(this, frameState);
         updateTileLoadProgress(this, frameState);
@@ -507,17 +509,19 @@ define([
     var cameraOriginScratch = new Cartesian3();
     var rootTraversalDetails = [];
 
+    // 实现网格的划分和调度
     function selectTilesForRendering(primitive, frameState) {
         var debug = primitive._debug;
         if (debug.suspendLodUpdate) {
             return;
         }
 
-        // Clear the render list.
+        // 清空渲染列表
         var tilesToRender = primitive._tilesToRender;
         tilesToRender.length = 0;
 
         // We can't render anything before the level zero tiles exist.
+        // 首先判断是否存在第零层的Tile，也就是整个四叉树的根节点
         var i;
         var tileProvider = primitive._tileProvider;
         if (!defined(primitive._levelZeroTiles)) {
@@ -689,6 +693,7 @@ define([
             debug.maxDepthVisited = tile.level;
         }
 
+        // 该Tile的精细度是否满足LOD要求，是否不需要请求更精细的层级。如果满足精度要求，则该Tile加入到_tilesToRender渲染队列，如果不满足精度要求，则该if判断为false
         var meetsSse = screenSpaceError(primitive, frameState, tile) < primitive.maximumScreenSpaceError;
 
         var southwestChild = tile.southwestChild;
@@ -986,9 +991,9 @@ define([
             return screenSpaceError2D(primitive, frameState, tile);
         }
 
-        var maxGeometricError = primitive._tileProvider.getLevelMaximumGeometricError(tile.level);
+        var maxGeometricError = primitive._tileProvider.getLevelMaximumGeometricError(tile.level); // 地球赤道的周长/像素数，也就是分辨率
 
-        var distance = tile._distance;
+        var distance = tile._distance; // 当前状态下，相机距离该Tile的真实距离
         var height = frameState.context.drawingBufferHeight;
         var sseDenominator = frameState.camera.frustum.sseDenominator;
 

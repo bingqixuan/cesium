@@ -467,7 +467,7 @@ define([
             TerrainFillMesh.updateFillTiles(this, this._quadtree._tilesToRender, frameState, this._vertexArraysToDestroy);
         }
 
-        // Add the tile render commands to the command list, sorted by texture count.
+        // 将瓦片渲染命令添加到命令列表里，根据纹理计数排序
         var tilesToRenderByTextureCount = this._tilesToRenderByTextureCount;
         for (var textureCountIndex = 0, textureCountLength = tilesToRenderByTextureCount.length; textureCountIndex < textureCountLength; ++textureCountIndex) {
             var tilesToRender = tilesToRenderByTextureCount[textureCountIndex];
@@ -584,6 +584,7 @@ define([
      * @returns {Visibility} The visibility of the tile.
      */
     GlobeSurfaceTileProvider.prototype.computeTileVisibility = function(tile, frameState, occluders) {
+        // 判断相机距离Tile的距离
         var distance = this.computeDistanceToTile(tile, frameState);
         tile._distance = distance;
 
@@ -635,6 +636,7 @@ define([
             }
         }
 
+        // 判断该Tile是否在裁剪面的内部
         var intersection = cullingVolume.computeVisibility(boundingVolume);
         if (intersection === Intersect.OUTSIDE) {
             return Visibility.NONE;

@@ -23,6 +23,9 @@ define([
     /**
      * A very simple {@link TerrainProvider} that produces geometry by tessellating an ellipsoidal
      * surface.
+     * Globe默认采用的地形Provider，该Provider不支持水面，没有法向量，所以即使开启光照，对Tile也是无效的.
+     * 它提供了一个全球范围内高度为0的地形，不需要额外的地形文件，就可以实时的自己来构建这个高度为0的Mesh.
+     * 对那些没有网络环境，或网络不理想，或不需要地形的应用，EllipsoidTerrainProvider提供了最简单的，无需额外负担的地形数据来构网.
      *
      * @alias EllipsoidTerrainProvider
      * @constructor
