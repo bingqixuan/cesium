@@ -30,7 +30,7 @@ package-lock.json
 # WebStorm user-specific
 .idea/workspace.xml
 .idea/tasks.xml
-.idea
+/.idea
 /Apps/Sandcastle/development
 /demo
 /plugins
