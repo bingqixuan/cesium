@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="ExampleAppearance">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+
+    </script>
+</head>
+
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+
+    #status {
+        position: fixed;
+        bottom: 40px;
+        right: 10px;
+        width: 50px;
+        height: 20px;
+        background: #0000008a;
+        border-radius: 10px;
+        padding: 5px;
+        color: #cacaca;
+        text-align: center;
+    }
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay">
+    <h1>Loading...</h1>
+</div>
+<div id="status">
+    0%
+</div>
+<script id="cesium_sandcastle_script">
+    var viewer;
+
+    function startup(Cesium) {
+        // 'use strict';
+        //Sandcastle_Begin
+        window.Cesium = Cesium;
+        viewer = new Cesium.Viewer('cesiumContainer', {
+            // Use Cesium World Terrain
+            // terrainProvider: Cesium.createWorldTerrain({
+            //     requestVertexNormals: true //Needed to visualize slope
+            // })
+        });
+
+        var camera = viewer.camera;
+        var defined = Cesium.defined;
+        var Cartesian3 = Cesium.Cartesian3;
+        var CesiumMath = Cesium.Math;
+        var saveCamera;
+        var zoomToAssets = true;
+        var SSE = 16;
+        var globeSSE = 2;
+        var endUserOptions = {};
+        var ionAssets = {};
+        var assetsPendingTiles = [];
+        var pendingGlobeTiles = 0;
+        var lastView;
+
+        function updateStateFromHash() {
+            endUserOptions = Cesium.queryToObject(window.location.hash.substring(1).replace('#', '?'));
+            var view = endUserOptions.view;
+            if (defined(endUserOptions.SSE)) {
+                SSE = Number(endUserOptions.SSE);
+                for (var id in ionAssets) {
+                    if (ionAssets.hasOwnProperty(id)) {
+                        ionAssets[id].maximumScreenSpaceError = SSE;
+                    }
+                }
+            }
+
+            if (defined(endUserOptions.globeSSE)) {
+                globeSSE = Number(endUserOptions.globeSSE);
+                viewer.scene.globe.maximumScreenSpaceError = globeSSE;
+            }
+
+            var viewChanged = (lastView !== view);
+            lastView = view;
+
+            // Load camera view from URL.
+            if (Cesium.defined(view)) {
+                var splitQuery = view.split(/[ ,]+/);
+                if (splitQuery.length > 1) {
+                    var longitude = !isNaN(+splitQuery[0]) ? +splitQuery[0] : 0.0;
+                    var latitude = !isNaN(+splitQuery[1]) ? +splitQuery[1] : 0.0;
+                    var height = ((splitQuery.length > 2) && (!isNaN(+splitQuery[2]))) ? +splitQuery[2] : 300.0;
+                    var heading = ((splitQuery.length > 3) && (!isNaN(+splitQuery[3]))) ? CesiumMath.toRadians(+splitQuery[3]) : undefined;
+                    var pitch = ((splitQuery.length > 4) && (!isNaN(+splitQuery[4]))) ? CesiumMath.toRadians(+splitQuery[4]) : undefined;
+                    var roll = ((splitQuery.length > 5) && (!isNaN(+splitQuery[5]))) ? CesiumMath.toRadians(+splitQuery[5]) : undefined;
+
+                    viewer.camera.setView({
+                        destination: Cartesian3.fromDegrees(longitude, latitude, height),
+                        orientation: {
+                            heading: heading,
+                            pitch: pitch,
+                            roll: roll
+                        }
+                    });
+                }
+            }
+
+            saveCamera = endUserOptions.saveCamera !== 'false';
+            zoomToAssets = endUserOptions.zoomToAssets !== 'false';
+
+            if (Cesium.defined(endUserOptions.token)) {
+                Cesium.Ion.defaultAccessToken = endUserOptions.token;
+            }
+
+            var assets = [];
+            if (Cesium.defined(endUserOptions.id)) {
+                assets = endUserOptions.id.split(',');
+            }
+
+            // Go over all assets that exist, see if any need to be removed
+            for (var id in ionAssets) {
+                if (ionAssets.hasOwnProperty(id)) {
+                    if (assets.indexOf(id) === -1) {
+                        console.log("Remove", id);
+                        viewer.scene.primitives.remove(ionAssets[id]);
+                        delete ionAssets[id];
+                    }
+                }
+            }
+
+            // Add new assets
+            for (var i = 0; i < assets.length; i++) {
+                if (defined(ionAssets[assets[i]])) continue;
+                console.log("Add", assets[i]);
+                ionAssets[assets[i]] = viewer.scene.primitives.add(
+                    new Cesium.Cesium3DTileset({
+                        url: Cesium.IonResource.fromAssetId(assets[i]),
+                        maximumScreenSpaceError: SSE
+                    })
+                );
+
+                ionAssets[assets[i]].loadProgress.addEventListener(function (numberOfPendingRequests, numberOfTilesProcessing) {
+                    if (assetsPendingTiles.length >= Object.keys(ionAssets).length) assetsPendingTiles = [];
+
+                    assetsPendingTiles.push(numberOfPendingRequests + numberOfTilesProcessing);
+                });
+
+                if (zoomToAssets)
+                    viewer.flyTo(ionAssets[assets[i]]);
+            }
+
+            console.log(endUserOptions);
+        }
+
+        updateStateFromHash();
+        window.onhashchange = updateStateFromHash;
+
+
+        function setPrecision(number) {
+            if (String(number).length > 8) {
+                return number.toFixed(8);
+            }
+
+            return number;
+        }
+
+        // Save camera on move.
+        function saveCameraCallback() {
+
+            var position = camera.positionCartographic;
+            var hpr = '';
+            if (defined(camera.heading)) {
+                hpr = ',' + setPrecision(CesiumMath.toDegrees(camera.heading)) + ',' + setPrecision(CesiumMath.toDegrees(camera.pitch)) + ',' + setPrecision(CesiumMath.toDegrees(camera.roll));
+            }
+            endUserOptions.view = setPrecision(CesiumMath.toDegrees(position.longitude)) + ',' + setPrecision(CesiumMath.toDegrees(position.latitude)) + ',' + setPrecision(position.height) + hpr;
+            history.pushState(undefined, '', '#' + Cesium.objectToQuery(endUserOptions));
+        }
+
+        var timeout;
+
+        camera.changed.addEventListener(function () {
+            if (!saveCamera) return;
+            window.clearTimeout(timeout);
+            timeout = window.setTimeout(saveCameraCallback, 300);
+        });
+
+        viewer.camera.percentageChanged = 0.01;
+
+        // Set up % loaded counter
+        viewer.scene.globe.tileLoadProgressEvent.addEventListener(function (numberOfPendingTiles) {
+            pendingGlobeTiles = numberOfPendingTiles;
+        });
+
+        viewer.scene.postUpdate.addEventListener(function () {
+            var pendingTiles = 0;
+            for (var i = 0; i < assetsPendingTiles.length; i++) {
+                pendingTiles += assetsPendingTiles[i];
+            }
+            document.querySelector('#status').innerHTML = pendingTiles + pendingGlobeTiles;
+        });
+
+        // Capture screenshot directly from canvas
+        function captureScreenshot() {
+            var deferred = Cesium.when.defer();
+
+            var removeCallback = viewer.scene.postRender.addEventListener(function () {
+                removeCallback();
+                try {
+                    const cesiumCanvas = viewer.scene.canvas;
+
+                    deferred.resolve(cesiumCanvas.toDataURL('image/png'));
+                } catch (e) {
+                    deferred.reject(e);
+                }
+            }, this);
+
+            viewer.scene.render(viewer.clock.currentTime);
+
+            return deferred.promise;
+        }
+
+        function dataURItoBlob(dataURI) {
+            // convert base64 to raw binary data held in a string
+            var byteString = atob(dataURI.split(',')[1]);
+
+            // separate out the mime component
+            var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+            // write the bytes of the string to an ArrayBuffer
+            var arrayBuffer = new ArrayBuffer(byteString.length);
+            var _ia = new Uint8Array(arrayBuffer);
+            for (var i = 0; i < byteString.length; i++) {
+                _ia[i] = byteString.charCodeAt(i);
+            }
+
+            var dataView = new DataView(arrayBuffer);
+            var blob = new Blob([dataView], {type: mimeString});
+            return blob;
+        }
+
+        function downloadURI(uri, name) {
+            var blob = dataURItoBlob(uri);
+            var urlToDownload = window.URL.createObjectURL(blob);
+            var link = document.createElement("a");
+            link.download = name;
+            link.href = urlToDownload;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(urlToDownload);
+            delete link;
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (event.keyCode == 80) {
+                captureScreenshot().then(function (dataUri) {
+                    downloadURI(dataUri, "Cesium Screenshot");
+                })
+                    .otherwise(function (error) {
+                        console.log(error);
+                    })
+            }
+        }, false);
+
+        //Sandcastle_End
+        Sandcastle.finishedLoading();
+    }
+
+    if (typeof Cesium !== "undefined") {
+        startup(Cesium);
+    } else if (typeof require === "function") {
+        require(["Cesium"], startup);
+    }
+
+</script>
+</body>
+
+</html>
