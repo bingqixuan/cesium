@@ -1068,6 +1068,7 @@ define([
 
         passState = defaultValue(passState, this._defaultPassState);
         // The command's framebuffer takes presidence over the pass' framebuffer, e.g., for off-screen rendering.
+        // 获取对应的FBO，优先离屏渲染
         var framebuffer = defaultValue(drawCommand._framebuffer, passState.framebuffer);
         var renderState = defaultValue(drawCommand._renderState, this._defaultRenderState);
         shaderProgram = defaultValue(shaderProgram, drawCommand._shaderProgram);
@@ -1217,9 +1218,12 @@ define([
         Check.defined('pickColor', pickColor);
         //>>includeEnd('debug');
 
+        // 颜色值转为4个byte，在换算成一个int
+        // 感觉这里绕了一个圈子
         return this._pickObjects[pickColor.toRgba()];
     };
 
+    // 构建一个PickID对象，包括该Object以及Key和Color
     function PickId(pickObjects, key, color) {
         this._pickObjects = pickObjects;
         this.key = key;
@@ -1246,6 +1250,9 @@ define([
      * Creates a unique ID associated with the input object for use with color-buffer picking.
      * The ID has an RGBA color value unique to this context.  You must call destroy()
      * on the pick ID when destroying the input object.
+     * 提供构建PickID方法
+     * 保证每一个Ojbect的ID唯一
+     * 通过Color.fromRgba(key)方法将ID转为对应的Color
      *
      * @param {Object} object The object to associate with the pick ID.
      * @returns {Object} A PickId object with a <code>color</code> property.

@@ -97,18 +97,22 @@ define([
             });
         }
 
+        // 合并该ShaderProgram所用到的顶点和片元着色器的代码
         var vertexShaderText = vertexShaderSource.createCombinedVertexShader(this._context);
         var fragmentShaderText = fragmentShaderSource.createCombinedFragmentShader(this._context);
 
+        // 创建Cache缓存中Key-Value中的Key值
         var keyword = vertexShaderText + fragmentShaderText + JSON.stringify(attributeLocations);
         var cachedShader;
 
+        // 如果已存在，则直接用
         if (defined(this._shaders[keyword])) {
             cachedShader = this._shaders[keyword];
 
             // No longer want to release this if it was previously released.
             delete this._shadersToRelease[keyword];
         } else {
+            // 如果不存在，则需要创建新的ShaderProgram
             var context = this._context;
             var shaderProgram = new ShaderProgram({
                 gl : context._gl,
@@ -121,6 +125,7 @@ define([
                 attributeLocations : attributeLocations
             });
 
+            // Key-Value中的Value值
             cachedShader = {
                 cache : this,
                 shaderProgram : shaderProgram,
@@ -130,11 +135,13 @@ define([
             };
 
             // A shader can't be in more than one cache.
+            // 添加到Cache中，并更新该Cache容器内总的shader数目
             shaderProgram._cachedShader = cachedShader;
             this._shaders[keyword] = cachedShader;
             ++this._numberOfShaders;
         }
 
+        // 该ShaderProgram的引用计数值
         ++cachedShader.count;
         return cachedShader.shaderProgram;
     };

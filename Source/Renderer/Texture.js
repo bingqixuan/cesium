@@ -658,6 +658,7 @@ define([
     };
 
     /**
+     * 为了解决纹理闪烁的情况
      * @param {MipmapHint} [hint=MipmapHint.DONT_CARE] optional.
      *
      * @exception {DeveloperError} Cannot call generateMipmap when the texture pixel format is DEPTH_COMPONENT or DEPTH_STENCIL.

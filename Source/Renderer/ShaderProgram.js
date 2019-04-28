@@ -63,6 +63,7 @@ define([
         this.id = nextShaderProgramId++;
     }
 
+    // Cesium提供了ShaderCache缓存机制，可以重用ShaderProgram
     ShaderProgram.fromCache = function(options) {
         options = defaultValue(options, defaultValue.EMPTY_OBJECT);
 
@@ -448,11 +449,16 @@ define([
         }
 
         var gl = shader._gl;
+        // 创建该Program，如果编译有错，则抛出异常
         var program = createAndLinkProgram(gl, shader, shader._debugShaders);
+        // 获取attribute变量的数目
         var numberOfVertexAttributes = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
+        // 获取uniform变量的列表
         var uniforms = findUniforms(gl, program);
+        // 根据czm_*规则区分uniform，分为自定义uniform和内建uniform
         var partitionedUniforms = partitionUniforms(shader, uniforms.uniformsByName);
 
+        // 保存属性
         shader._program = program;
         shader._numberOfVertexAttributes = numberOfVertexAttributes;
         shader._vertexAttributes = findVertexAttributes(gl, program, numberOfVertexAttributes);

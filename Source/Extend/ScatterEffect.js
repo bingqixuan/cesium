@@ -49,7 +49,7 @@ define([
      * @param {Scene} options.scene 场景
      * @param {Cartesian3[]} options.positions 位置数组,可以一次性创建多个
      * @param {Number} [options.animationSpeed=4] 动画的速度,v > 0
-     * @param {Number} [options.radius=1000] 标记的大小
+     * @param {Number} [options.radius=1000000] 标记的大小
      * @param {Number} [options.color=Color.YELLOW] 标记颜色
      * @constructor
      */

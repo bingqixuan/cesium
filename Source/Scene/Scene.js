@@ -2784,6 +2784,7 @@ define([
         passState.viewport = originalViewport;
     }
 
+    // updateAndExecuteCommands中调用，开始渲染所有的DrawCommand
     function executeCommandsInViewport(firstViewport, scene, passState, backgroundColor) {
         var environmentState = scene._environmentState;
         var view = scene._view;
@@ -2971,6 +2972,7 @@ define([
         }
     }
 
+    // updateAndExecuteCommands中调用，更新passState.framebuffer
     function updateAndClearFramebuffers(scene, passState, clearColor) {
         var context = scene._context;
         var frameState = scene._frameState;
@@ -3107,6 +3109,7 @@ define([
         }
 
         if (!useOIT && !usePostProcess && useGlobeDepthFramebuffer) {
+            // framebuffer置空，即渲染到屏幕
             passState.framebuffer = defaultFramebuffer;
             view.globeDepth.executeCopyColor(context, passState);
         }
@@ -3271,6 +3274,7 @@ define([
         viewport.width = context.drawingBufferWidth;
         viewport.height = context.drawingBufferHeight;
 
+        // 清空FBO
         var passState = view.passState;
         passState.framebuffer = undefined;
         passState.blendingEnabled = undefined;
@@ -3284,7 +3288,9 @@ define([
 
         updateEnvironment(scene);
         // 负责数据的调度，创建一个个task，不负责数据的加载和维护
+        // 更新passState.framebuffer，并对该FBO渲染
         updateAndExecuteCommands(scene, passState, backgroundColor);
+        // 处理FBO，并渲染到屏幕中
         resolveFramebuffers(scene, passState);
 
         passState.framebuffer = undefined;

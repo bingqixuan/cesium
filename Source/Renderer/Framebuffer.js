@@ -20,11 +20,13 @@ define([
         PixelDatatype) {
     'use strict';
 
+    // 绑定颜色纹理，指定帧缓存附件attachment
     function attachTexture(framebuffer, attachment, texture) {
         var gl = framebuffer._gl;
         gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment, texture._target, texture._texture, 0);
     }
 
+    // 绑定渲染缓存对象，指定帧缓存附件attachment
     function attachRenderbuffer(framebuffer, attachment, renderbuffer) {
         var gl = framebuffer._gl;
         gl.framebufferRenderbuffer(gl.FRAMEBUFFER, attachment, gl.RENDERBUFFER, renderbuffer._getRenderbuffer());
@@ -152,6 +154,7 @@ define([
 
         if (defined(options.colorTextures)) {
             var textures = options.colorTextures;
+            // 查看颜色纹理的个数是否超过上限
             length = this._colorTextures.length = this._activeColorAttachments.length = textures.length;
 
             //>>includeStart('debug', pragmas.debug);
@@ -160,6 +163,7 @@ define([
             }
             //>>includeEnd('debug');
 
+            // 依次绑定颜色纹理
             for (i = 0; i < length; ++i) {
                 texture = textures[i];
 
@@ -182,6 +186,7 @@ define([
             }
         }
 
+        // 依次绑定渲染缓存
         if (defined(options.colorRenderbuffers)) {
             var renderbuffers = options.colorRenderbuffers;
             length = this._colorRenderbuffers.length = this._activeColorAttachments.length = renderbuffers.length;
@@ -308,11 +313,13 @@ define([
         }
     });
 
+    // 绑定FBO
     Framebuffer.prototype._bind = function() {
         var gl = this._gl;
         gl.bindFramebuffer(gl.FRAMEBUFFER, this._framebuffer);
     };
 
+    // 释放FBO
     Framebuffer.prototype._unBind = function() {
         var gl = this._gl;
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);

@@ -197,6 +197,7 @@ define([
     }
 
     function createFramebuffers(globeDepth, context) {
+        // GlobeDepth中创建一个和当前窗口大小一样的颜色纹理
         globeDepth.framebuffer = new Framebuffer({
             context : context,
             colorTextures : [globeDepth._colorTexture],

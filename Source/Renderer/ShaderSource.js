@@ -63,9 +63,11 @@ define([
             return;
         }
 
+        // 更新标识，当前节点已经结果过
         currentNode.evaluated = true;
 
         // identify all dependencies that are referenced from this glsl source code
+        // 正则表达式，搜索当前代码中符合czm_*的所有内建变量或函数
         var czmMatches = currentNode.glslSource.match(/\bczm_[a-zA-Z0-9_]*/g);
         if (defined(czmMatches) && czmMatches !== null) {
             // remove duplicates
@@ -73,10 +75,13 @@ define([
                 return czmMatches.indexOf(elem) === pos;
             });
 
+            // 遍历czmMatches找到的所有符合规范的变量，建立依赖关系，是一个双向链表
             czmMatches.forEach(function(element) {
                 if (element !== currentNode.name && ShaderSource._czmBuiltinsAndUniforms.hasOwnProperty(element)) {
                     var referencedNode = getDependencyNode(element, ShaderSource._czmBuiltinsAndUniforms[element], dependencyNodes);
+                    // currentNodetNode依赖referencedNode
                     currentNode.dependsOn.push(referencedNode);
+                    // referencedNode被currentNodetNode依赖
                     referencedNode.requiredBy.push(currentNode);
 
                     // recursive call to find any dependencies of the new node
@@ -86,6 +91,7 @@ define([
         }
     }
 
+    // 这其实是一个树的广度优先的遍历，左右上的顺序，遍历的过程中会解除requiredBy的关联
     function sortDependencies(dependencyNodes) {
         var nodesWithoutIncomingEdges = [];
         var allNodes = [];
@@ -139,12 +145,16 @@ define([
     function getBuiltinsAndAutomaticUniforms(shaderSource) {
         // generate a dependency graph for builtin functions
         var dependencyNodes = [];
+        // 获取Main根节点
         var root = getDependencyNode('main', shaderSource, dependencyNodes);
+        // 生成该root依赖的所有节点，保存在dependencyNodes
         generateDependencies(root, dependencyNodes);
+        // 根据依赖关系排序
         sortDependencies(dependencyNodes);
 
         // Concatenate the source code for the function dependencies.
         // Iterate in reverse so that dependent items are declared before they are used.
+        // 创建需要的内建变量声明
         var builtinsSource = '';
         for (var i = dependencyNodes.length - 1; i >= 0; --i) {
             builtinsSource = builtinsSource + dependencyNodes[i].glslSource + '\n';
@@ -158,6 +168,7 @@ define([
         var length;
 
         // Combine shader sources, generally for pseudo-polymorphism, e.g., czm_getMaterial.
+        // sources中的文本合并
         var combinedSources = '';
         var sources = shaderSource.sources;
         if (defined(sources)) {
@@ -167,6 +178,7 @@ define([
             }
         }
 
+        // 去掉代码中的注释部分
         combinedSources = removeComments(combinedSources);
 
         // Extract existing shader version from sources
@@ -223,6 +235,7 @@ define([
         }
 
         // Prepend #defines for uber-shaders
+        // 添加预编译宏
         var defines = shaderSource.defines;
         if (defined(defines)) {
             for (i = 0, length = defines.length; i < length; ++i) {
@@ -254,6 +267,7 @@ define([
         }
 
         // append built-ins
+        // 追加内建变量
         if (shaderSource.includeBuiltIns) {
             result += getBuiltinsAndAutomaticUniforms(combinedSources);
         }
@@ -357,11 +371,14 @@ define([
     ShaderSource._czmBuiltinsAndUniforms = {};
 
     // combine automatic uniforms and Cesium built-ins
+    // 合并automatic uniforms和Cesium内建实例
+    // CzmBuiltins是打包时自动创建的，里面包括所有内建实例的类型和命名
     for ( var builtinName in CzmBuiltins) {
         if (CzmBuiltins.hasOwnProperty(builtinName)) {
             ShaderSource._czmBuiltinsAndUniforms[builtinName] = CzmBuiltins[builtinName];
         }
     }
+    // AutomaticUniforms数组是在AutomaticUniforms.js中创建并返回
     for ( var uniformName in AutomaticUniforms) {
         if (AutomaticUniforms.hasOwnProperty(uniformName)) {
             var uniform = AutomaticUniforms[uniformName];
