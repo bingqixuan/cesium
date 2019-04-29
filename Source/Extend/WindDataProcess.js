@@ -1,11 +1,11 @@
 define([
-    './netcdfjs',
+    // './netcdfjs',
     './WindUtil',
     '../Core/Math',
     '../Core/Resource',
     '../ThirdParty/when',
 ], function (
-    netcdfjs,
+    // netcdfjs,
     WindUtil,
     CesiumMath,
     Resource,
@@ -23,8 +23,7 @@ define([
     }
 
     WindDataProcess.loadData = function (fileOptions) {
-        var ncFilePath = fileOptions.dataDirectory + "demo.nc";
-        return loadNetCDF(ncFilePath);
+        return loadNetCDF(fileOptions.dataDirectory);
     };
 
     WindDataProcess.randomizeParticleLonLatLev = function (maxParticles, lonLatRange) {
@@ -37,8 +36,9 @@ define([
         return array;
     };
 
-    function loadNetCDF(filePath) {
-        var resource = Resource.createIfNeeded(filePath);
+    function loadNetCDF(dataDirectory) {
+        var ncFilePath = dataDirectory + "demo.nc";
+        var resource = Resource.createIfNeeded(ncFilePath);
         var promise = resource.fetchArrayBuffer();
         return when(promise).then(function (buffer) {
 
@@ -86,32 +86,36 @@ define([
             windData.V.min = vAttributes['min'].value;
             windData.V.max = vAttributes['max'].value;
 
-            var colorTableFilePath = filePath + 'colorTable.json';
+            var colorTableFilePath = dataDirectory + 'colorTable.json';
             return loadColorTable(colorTableFilePath);
         });
-        
+
     }
 
     function loadColorTable(filePath) {
-        var string = WindUtil.loadText(filePath);
-        var json = JSON.parse(string);
+        var resource = Resource.createIfNeeded(filePath);
+        var promise = resource.fetchText();
 
-        var colorNum = json['ncolors'];
-        var colorTable = json['colorTable'];
+        return when(promise).then(function (text) {
+            var json = JSON.parse(text);
 
-        var colorsArray = new Float32Array(3 * colorNum);
-        for (var i = 0; i < colorNum; i++) {
-            colorsArray[3 * i] = colorTable[3 * i];
-            colorsArray[3 * i + 1] = colorTable[3 * i + 1];
-            colorsArray[3 * i + 2] = colorTable[3 * i + 2];
-        }
+            var colorNum = json['ncolors'];
+            var colorTable = json['colorTable'];
 
-        windData.colorTable = {};
-        windData.colorTable.colorNum = colorNum;
-        windData.colorTable.array = colorsArray;
+            var colorsArray = new Float32Array(3 * colorNum);
+            for (var i = 0; i < colorNum; i++) {
+                colorsArray[3 * i] = colorTable[3 * i];
+                colorsArray[3 * i + 1] = colorTable[3 * i + 1];
+                colorsArray[3 * i + 2] = colorTable[3 * i + 2];
+            }
+
+            windData.colorTable = {};
+            windData.colorTable.colorNum = colorNum;
+            windData.colorTable.array = colorsArray;
+
+            return windData;
+        });
     }
-
-
 
     return WindDataProcess;
 });

@@ -53,7 +53,7 @@ define([
          * @type {Texture}
          * @default undefined
          */
-        this.outputTexture = options.outputTexture;
+        this.outputTextures = options.outputTextures;
 
         /**
          * Function that is called immediately before the ComputeCommand is executed. Used to

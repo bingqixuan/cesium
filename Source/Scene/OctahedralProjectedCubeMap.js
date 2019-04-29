@@ -345,7 +345,7 @@ define([
                 uniformMap : {
                     cubeMap : createUniformTexture(cubeMap)
                 },
-                outputTexture : mipTexture,
+                outputTextures : [mipTexture],
                 persists : true,
                 owner : this
             });
@@ -368,7 +368,7 @@ define([
         var atlasCommand = new ComputeCommand({
             fragmentShaderSource : OctahedralProjectionAtlasFS,
             uniformMap : uniformMap,
-            outputTexture : this._texture,
+            outputTextures : [this._texture],
             persists : false,
             owner : this
         });

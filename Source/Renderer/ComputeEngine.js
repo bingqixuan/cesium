@@ -43,10 +43,10 @@ define([
         color : new Color(0.0, 0.0, 0.0, 0.0)
     });
 
-    function createFramebuffer(context, outputTexture) {
+    function createFramebuffer(context, outputTextures) {
         return new Framebuffer({
             context : context,
-            colorTextures : [outputTexture],
+            colorTextures : outputTextures,
             destroyAttachments : false
         });
     }
@@ -90,17 +90,17 @@ define([
             throw new DeveloperError('computeCommand.fragmentShaderSource or computeCommand.shaderProgram is required.');
         }
 
-        Check.defined('computeCommand.outputTexture', computeCommand.outputTexture);
+        Check.defined('computeCommand.outputTextures', computeCommand.outputTextures);
         //>>includeEnd('debug');
 
-        var outputTexture = computeCommand.outputTexture;
-        var width = outputTexture.width;
-        var height = outputTexture.height;
+        var outputTextures = computeCommand.outputTextures;
+        var width = outputTextures[0].width;
+        var height = outputTextures[0].height;
 
         var context = this._context;
         var vertexArray = defined(computeCommand.vertexArray) ? computeCommand.vertexArray : context.getViewportQuadVertexArray();
         var shaderProgram = defined(computeCommand.shaderProgram) ? computeCommand.shaderProgram : createViewportQuadShader(context, computeCommand.fragmentShaderSource);
-        var framebuffer = createFramebuffer(context, outputTexture);
+        var framebuffer = createFramebuffer(context, outputTextures);
         var renderState = createRenderState(width, height);
         var uniformMap = computeCommand.uniformMap;
 
@@ -127,7 +127,7 @@ define([
         }
 
         if (defined(computeCommand.postExecute)) {
-            computeCommand.postExecute(outputTexture);
+            computeCommand.postExecute(outputTextures);
         }
     };
 

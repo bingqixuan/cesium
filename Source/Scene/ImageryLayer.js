@@ -987,9 +987,9 @@ define([
                     preExecute : function(command) {
                         reprojectToGeographic(command, context, texture, imagery.rectangle);
                     },
-                    postExecute : function(outputTexture) {
-                        imagery.texture = outputTexture;
-                        that._finalizeReprojectTexture(context, outputTexture);
+                    postExecute : function(outputTextures) {
+                        imagery.texture = outputTextures[0];
+                        that._finalizeReprojectTexture(context, outputTextures[0]);
                         imagery.state = ImageryState.READY;
                         imagery.releaseReference();
                     }
@@ -1238,7 +1238,7 @@ define([
         reproject.vertexArray.getAttribute(1).vertexBuffer.copyFromArrayView(webMercatorT);
 
         command.shaderProgram = reproject.shaderProgram;
-        command.outputTexture = outputTexture;
+        command.outputTextures = [outputTexture];
         command.uniformMap = uniformMap;
         command.vertexArray = reproject.vertexArray;
     }
